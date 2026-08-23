@@ -12,6 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
+        <jackson.version>3.2.2</jackson.version>
     </properties>
 
     <repositories>
@@ -51,6 +52,18 @@
         <dependency>
             <groupId>dev.tamboui</groupId>
             <artifactId>tamboui-panama-backend</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>tools.jackson.jr</groupId>
+            <artifactId>jackson-jr-stree</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- jackson-jr-stree declares it optional, but its tree codec needs it at runtime -->
+        <dependency>
+            <groupId>tools.jackson.jr</groupId>
+            <artifactId>jackson-jr-objects</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>

@@ -23,7 +23,7 @@ class AppleContainerCliTest {
                 echo "called with $*"
                 """);
 
-        var result = new AppleContainerCli(fakeCli, Duration.ofSeconds(5)).run("list", "--all");
+        var result = AppleContainerCli.builder().executable(fakeCli).timeout(Duration.ofSeconds(5)).build().run("list", "--all");
 
         assertTrue(result.isSuccess());
         assertEquals("called with list --all\n", result.stdOut());

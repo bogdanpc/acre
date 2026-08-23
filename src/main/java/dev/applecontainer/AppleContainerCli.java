@@ -1,5 +1,10 @@
 package dev.applecontainer;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.jr.ob.JSON;
+import tools.jackson.jr.stree.JrSimpleTreeExtension;
+import tools.jackson.jr.stree.JrsValue;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -14,16 +19,13 @@ import java.util.concurrent.TimeUnit;
 public class AppleContainerCli {
 
     static final String cli = "container";
+    private static final JSON JSON_READER = JSON.builder().register(new JrSimpleTreeExtension()).build();
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20);
 
     private final String executable;
     private final Duration timeout;
 
-    public AppleContainerCli() {
-        this(cli, DEFAULT_TIMEOUT);
-    }
-
-    AppleContainerCli(String executable, Duration timeout) {
+    private AppleContainerCli(String executable, Duration timeout) {
         this.executable = executable;
         this.timeout = timeout;
     }
@@ -53,9 +55,61 @@ public class AppleContainerCli {
         }
     }
 
+    /**
+     * Runs the CLI with {@code --format json} and parses the result.
+     *
+     * @param args the command and its arguments
+     * @throws AppleContainerCliException if the CLI failed or output is not JSON
+     */
+    public JrsValue runJson(String... args) {
+        var argsWithFormat = new ArrayList<String>(args.length + 2);
+        argsWithFormat.addAll(List.of(args));
+        argsWithFormat.add("--format");
+        argsWithFormat.add("json");
+
+        var result = run(argsWithFormat.toArray(String[]::new));
+        if (!result.isSuccess()) {
+            throw new AppleContainerCliException("%s %s failed with exit code %d: %s"
+                    .formatted(executable, String.join(" ", argsWithFormat), result.exitCode(), result.stdErr().strip()));
+        }
+
+        try {
+            return JSON_READER.treeFrom(result.stdOut());
+        } catch (JacksonException e) {
+            throw new AppleContainerCliException("Cannot read JSON from " + String.join(" ", argsWithFormat), e);
+        }
+    }
+
     private static String readStream(InputStream stream) throws IOException {
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+
+        private String executable = cli;
+        private Duration timeout = DEFAULT_TIMEOUT;
+
+        private Builder() {
+        }
+
+        public Builder executable(String executable) {
+            this.executable = executable;
+            return this;
+        }
+
+        public Builder timeout(Duration timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public AppleContainerCli build() {
+            return new AppleContainerCli(executable, timeout);
         }
     }
 }
