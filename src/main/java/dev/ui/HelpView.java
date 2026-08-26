@@ -57,6 +57,7 @@ public final class HelpView {
         entry(out, "tab", "next tab");
         section(out, "app");
 
+        entry(out, "r", "reload");
         entry(out, "^K / :", "command palette");
         entry(out, "?", "this help");
         entry(out, "q", "quit");

@@ -25,4 +25,8 @@ public enum AppleContainerStatus {
     public String label() {
         return label;
     }
+
+    public static AppleContainerStatus of(boolean running) {
+        return running ? UP : DOWN;
+    }
 }

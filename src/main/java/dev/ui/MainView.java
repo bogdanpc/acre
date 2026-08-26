@@ -5,8 +5,6 @@ import static dev.tamboui.toolkit.Toolkit.length;
 import static dev.tamboui.toolkit.Toolkit.stack;
 import static dev.tamboui.toolkit.Toolkit.tabs;
 
-import dev.containers.ContainersView;
-import dev.images.ImagesView;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
@@ -16,27 +14,34 @@ import dev.tamboui.toolkit.element.RenderContext;
 import dev.tamboui.toolkit.element.Size;
 import dev.tamboui.toolkit.elements.TabsElement;
 import dev.tamboui.toolkit.event.EventResult;
+import dev.tamboui.tui.bindings.ActionHandler;
+import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.tui.event.KeyEvent;
 import dev.tamboui.widgets.tabs.TabsState;
-import dev.volumes.VolumesView;
+
+import java.util.List;
 
 public final class MainView implements Element {
 
-    private static final String[] TAB_TITLES = {"Containers", "Images", "Volumes"};
-
     private final TabsState tabsState = new TabsState(0);
 
-    private final ContainersView containers = new ContainersView();
-    private final ImagesView images = new ImagesView();
-    private final VolumesView volumes = new VolumesView();
-    private final HeaderView header = new HeaderView();
+    private final List<Tab> tabs;
+    private final HeaderView header;
     private final HelpView help = new HelpView();
     private final FooterView footer = new FooterView();
 
-    private final Runnable onQuit;
+    private final ActionHandler actions;
+    private final ActionHandler helpActions;
 
-    public MainView(Runnable onQuit) {
-        this.onQuit = onQuit;
+    public MainView(Runnable onQuit, List<Tab> tabs) {
+        this(onQuit, Loader.of(AppleContainerStatus.UNKNOWN), tabs);
+    }
+
+    public MainView(Runnable onQuit, Loader<AppleContainerStatus> status, List<Tab> tabs) {
+        this.tabs = List.copyOf(tabs);
+        this.header = new HeaderView(status);
+        this.actions = actions(onQuit);
+        this.helpActions = helpActions(onQuit);
     }
 
     @Override
@@ -52,7 +57,7 @@ public final class MainView implements Element {
     private Element root() {
         Element base = dock()
                 .top(header.element(tabBar()), length(1))
-                .center(content())
+                .center(selected().content().get())
                 .bottom(footer.element(), length(1))
                 .id("root")
                 .onKeyEvent(this::onKey);
@@ -70,60 +75,41 @@ public final class MainView implements Element {
     }
 
     private String[] tabTitles() {
-        int[] counts = {containers.count(), images.count(), volumes.count()};
-        String[] titles = new String[TAB_TITLES.length];
-        for (int i = 0; i < TAB_TITLES.length; i++) {
-            titles[i] = TAB_TITLES[i] + " (" + counts[i] + ")";
-        }
-        return titles;
+        return tabs.stream()
+                .map(Tab::title)
+                .toArray(String[]::new);
     }
 
-    private Element content() {
-        int index = tabsState.selected() == null ? 0 : tabsState.selected();
-        return switch (index) {
-            case 1 -> images.element();
-            case 2 -> volumes.element();
-            default -> containers.element();
-        };
+    private Tab selected() {
+        var index = tabsState.selected();
+        return tabs.get(index == null ? 0 : index);
     }
 
     private EventResult onKey(KeyEvent event) {
-        if (event.isChar('?')) {
-            help.toggle();
-            return EventResult.HANDLED;
-        }
         if (help.visible()) {
-            onHelpKey(event);
+            helpActions.dispatch(event);
             return EventResult.HANDLED;
         }
-        if (event.isRight() || event.isCharIgnoreCase('l')) {
-            tabsState.selectNext(TAB_TITLES.length);
-            return EventResult.HANDLED;
-        }
-        if (event.isLeft() || event.isCharIgnoreCase('h')) {
-            tabsState.selectPrevious(TAB_TITLES.length);
-            return EventResult.HANDLED;
-        }
-        for (int i = 0; i < TAB_TITLES.length; i++) {
-            if (event.isChar((char) ('1' + i))) {
-                tabsState.select(i);
-                return EventResult.HANDLED;
-            }
-        }
-        if (event.isQuit() || event.isCharIgnoreCase('q')) {
-            onQuit.run();
-            return EventResult.HANDLED;
-        }
-        return EventResult.UNHANDLED;
+        return actions.dispatch(event) ? EventResult.HANDLED : EventResult.UNHANDLED;
     }
 
-    private void onHelpKey(KeyEvent event) {
-        if (event.isCancel()) {
-            help.hide();
-            return;
+    private ActionHandler actions(Runnable onQuit) {
+        var handler = new ActionHandler(KeyBindings.get())
+                .on(KeyBindings.TOGGLE_HELP, event -> help.toggle())
+                .on(Actions.MOVE_RIGHT, event -> tabsState.selectNext(tabs.size()))
+                .on(Actions.MOVE_LEFT, event -> tabsState.selectPrevious(tabs.size()))
+                .on(Actions.QUIT, event -> onQuit.run());
+        for (int i = 0; i < Math.min(tabs.size(), KeyBindings.MAX_TABS); i++) {
+            var index = i;
+            handler.on(KeyBindings.selectTab(i + 1), event -> tabsState.select(index));
         }
-        if (event.isQuit() || event.isCharIgnoreCase('q')) {
-            onQuit.run();
-        }
+        return handler;
+    }
+
+    private ActionHandler helpActions(Runnable onQuit) {
+        return new ActionHandler(KeyBindings.get())
+                .on(KeyBindings.TOGGLE_HELP, event -> help.toggle())
+                .on(Actions.CANCEL, event -> help.hide())
+                .on(Actions.QUIT, event -> onQuit.run());
     }
 }

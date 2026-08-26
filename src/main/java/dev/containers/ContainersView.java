@@ -1,49 +1,37 @@
 package dev.containers;
 
-import static dev.tamboui.toolkit.Toolkit.fill;
-import static dev.tamboui.toolkit.Toolkit.length;
-import static dev.tamboui.toolkit.Toolkit.table;
+import dev.tamboui.style.Color;
+import dev.tamboui.style.Style;
+import dev.tamboui.toolkit.Toolkit;
+import dev.ui.Align;
+import dev.ui.TableController;
+import dev.ui.TableView;
 
 import java.util.List;
 
-import dev.tamboui.style.Color;
-import dev.tamboui.toolkit.element.Element;
-import dev.tamboui.toolkit.elements.TableElement;
-import dev.tamboui.widgets.table.TableState;
-
-/** Table of containers, shown under the "Containers" tab. */
+/** The columns of the "Containers" tab. */
 public final class ContainersView {
 
-    private static final List<String[]> ROWS = List.of(
-        new String[] {"web-01", "nginx:1.27", "running", "192.168.64.3"},
-        new String[] {"api-01", "eclipse-temurin:25", "running", "192.168.64.4"},
-        new String[] {"cache-01", "redis:7", "stopped", "-"});
-
-    private final TableState state = new TableState();
-
-    /**
-     * Returns how many containers the table lists.
-     *
-     * @return the row count, shown next to the tab title
-     */
-    public int count() {
-        return ROWS.size();
+    private ContainersView() {
     }
 
-    /**
-     * Builds the table element.
-     *
-     * @return the element to render
-     */
-    public Element element() {
-        TableElement table = table().header("ID", "IMAGE", "STATE", "ADDRESS");
-        ROWS.forEach(table::row);
-        return table
-            .widths(length(12), fill(), length(10), length(16))
-            .state(state)
-            .highlightColor(Color.CYAN)
-            .highlightSymbol("> ")
-            .title("Containers")
-            .rounded();
+    public static TableView<Container> of(TableController<Container> controller) {
+        return new TableView<>(controller, List.of(
+                TableView.Column.of("ID", Toolkit.length(40), Container::id)
+                        .style(_ -> Style.EMPTY.fg(Color.CYAN)),
+                TableView.Column.of("IMAGE", Toolkit.fill(), Container::image),
+                TableView.Column.of("STATE", Toolkit.length(10), Container::state)
+                        .style(ContainersView::stateStyle),
+                TableView.Column.of("ADDRESS", Toolkit.length(16), Container::address),
+                TableView.Column.of("CPUS", Toolkit.length(5), (Container c) -> String.valueOf(c.cpus()))
+                        .align(Align.RIGHT),
+                TableView.Column.of("MEMORY", Toolkit.length(9), Container::memory)
+                        .align(Align.RIGHT)));
+    }
+
+    static Style stateStyle(Container container) {
+        var state = ContainerState.of(container.state());
+        var style = Style.EMPTY.fg(state.color());
+        return state == ContainerState.RUNNING || state == ContainerState.ERROR ? style.bold() : style;
     }
 }

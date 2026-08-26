@@ -12,16 +12,23 @@ public final class HeaderView {
     private static final String BRAND = " acre ";
     private static final String DOT = "●";
 
+    private final Loader<AppleContainerStatus> status;
+
+    public HeaderView(Loader<AppleContainerStatus> status) {
+        this.status = status;
+    }
+
     /**
-     * Header
+     * Header. The status starts as {@link AppleContainerStatus#UNKNOWN} and turns green or red on
+     * a later frame, once the loader has an answer.
      */
     public Element element(TabsElement tabBar) {
-        var status = AppleContainerStatus.UNKNOWN;
+        var current = status.value();
         return row(
                 text(BRAND).bold().fit(),
                 tabBar.fill(),
-                text("  " + DOT + " ").fg(status.color()).fit(),
-                text(status.label()).fg(status.color()).fit()
+                text("  " + DOT + " ").fg(current.color()).fit(),
+                text(current.label()).fg(current.color()).fit()
         );
     }
 }
