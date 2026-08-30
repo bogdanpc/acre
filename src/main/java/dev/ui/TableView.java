@@ -1,11 +1,13 @@
 package dev.ui;
 
+import dev.palette.Command;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.text.Span;
 import dev.tamboui.toolkit.Toolkit;
 import dev.tamboui.toolkit.element.Element;
+import dev.tamboui.toolkit.elements.StackElement;
 import dev.tamboui.tui.bindings.ActionHandler;
 import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.widgets.table.Cell;
@@ -68,11 +70,15 @@ public final class TableView<T> {
         return controller.title();
     }
 
-    public Element element() {
+    public StackElement element() {
         return Toolkit.stack(controller.element(this::body))
                 .id(controller.title())
                 .focusable()
                 .onAction(actions);
+    }
+
+    public List<Command> commands() {
+        return List.of(new Command("reload the " + title().toLowerCase() + " list", controller::reload));
     }
 
     private Element body(List<T> rows) {
