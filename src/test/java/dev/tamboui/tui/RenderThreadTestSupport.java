@@ -1,23 +1,15 @@
 package dev.tamboui.tui;
 
 /**
- * Marks the current thread as a TamboUI render thread.
- *
- * <p>TamboUI only lets the render thread touch elements, and only
- * {@code TuiRunner} can set that mark. This helper lives in the framework
- * package so tests can render without starting a terminal.
+ * {@link RenderThread#markAsRenderThread()} is package-private, so this shim has to live in
+ * TamboUI's package. Without the mark, an {@code Element} refuses to render off the event loop.
  */
 public final class RenderThreadTestSupport {
 
     private RenderThreadTestSupport() {
     }
 
-    public static void markCurrentThreadAsRenderThread() {
+    public static void markAsRenderThread() {
         RenderThread.markAsRenderThread();
     }
-
-    public static void unmarkCurrentThread() {
-        RenderThread.clearRenderThread();
-    }
-
 }

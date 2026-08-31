@@ -16,7 +16,7 @@ import dev.tamboui.widgets.table.Row;
 import java.util.List;
 import java.util.function.Function;
 
-public final class TableView<T> {
+public class TableView<T> {
 
     private static final String SELECTED_SYMBOL = "» ";
     private static final Style SELECTED_ROW =
@@ -66,6 +66,12 @@ public final class TableView<T> {
                 .on(Actions.MOVE_UP, _ -> controller.moveUp());
     }
 
+    /** Binds one more key action on this table, for the commands of its own tab. */
+    public TableView<T> on(String action, Runnable run) {
+        actions.on(action, _ -> run.run());
+        return this;
+    }
+
     public String title() {
         return controller.title();
     }
@@ -78,7 +84,8 @@ public final class TableView<T> {
     }
 
     public List<Command> commands() {
-        return List.of(new Command("reload the " + title().toLowerCase() + " list", controller::reload));
+        return List.of(new Command("reload the " + title().toLowerCase() + " list",
+                KeyBindings.shortcutKey(KeyBindings.RELOAD), controller::reload));
     }
 
     private Element body(List<T> rows) {

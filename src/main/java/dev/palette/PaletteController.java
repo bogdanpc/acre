@@ -4,6 +4,7 @@ import dev.tamboui.toolkit.Toolkit;
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
 import dev.tamboui.widgets.input.TextInputState;
+import dev.tamboui.widgets.table.TableState;
 
 import java.util.List;
 
@@ -11,8 +12,9 @@ public final class PaletteController {
 
     private final TextInputState query = new TextInputState();
 
+    private final TableState rows = new TableState();
+
     private List<Command> commands = List.of();
-    private int index;
     private boolean visible;
 
     public boolean visible() {
@@ -22,14 +24,14 @@ public final class PaletteController {
     public void open(List<Command> commands) {
         this.commands = List.copyOf(commands);
         this.query.clear();
-        this.index = 0;
+        this.rows.select(0);
         this.visible = true;
     }
 
     public void close() {
         this.commands = List.of();
         this.query.clear();
-        this.index = 0;
+        this.rows.select(0);
         this.visible = false;
     }
 
@@ -37,8 +39,13 @@ public final class PaletteController {
         return query;
     }
 
+    public TableState rows() {
+        return rows;
+    }
+
     public int index() {
-        return index;
+        var selected = rows.selected();
+        return selected == null ? 0 : selected;
     }
 
     public List<Command> matches() {
@@ -47,7 +54,7 @@ public final class PaletteController {
 
     public Command selected() {
         var matches = matches();
-        return matches.isEmpty() || index >= matches.size() ? null : matches.get(index);
+        return matches.isEmpty() || index() >= matches.size() ? null : matches.get(index());
     }
 
     public void handle(KeyEvent event) {
@@ -69,7 +76,7 @@ public final class PaletteController {
             return;
         }
         if (Toolkit.handleTextInputKey(query, event)) {
-            index = 0;
+            rows.select(0);
         }
     }
 
@@ -83,6 +90,6 @@ public final class PaletteController {
 
     private void move(int delta) {
         int count = matches().size();
-        index = count == 0 ? 0 : Math.floorMod(index + delta, count);
+        rows.select(count == 0 ? 0 : Math.floorMod(index() + delta, count));
     }
 }

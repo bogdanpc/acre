@@ -1,15 +1,10 @@
 package dev.containers;
 
-import dev.applecontainer.AppleContainerCli;
 import dev.applecontainer.AppleContainerCliException;
+import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,11 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContainerCommandsTest {
 
-    @TempDir
-    Path tempDir;
+    @RegisterExtension
+    final MockContainerCli cli = new MockContainerCli();
 
     @Test
-    void readsTheContainerListFromTheJsonOutput() throws IOException {
+    void readsTheContainerListFromTheJsonOutput() {
         var commands = commandsPrinting("""
                 [
                   {
@@ -46,7 +41,7 @@ class ContainerCommandsTest {
     }
 
     @Test
-    void hasNoAddressWhileTheContainerIsStopped() throws IOException {
+    void hasNoAddressWhileTheContainerIsStopped() {
         var commands = commandsPrinting("""
                 [
                   {
@@ -67,13 +62,50 @@ class ContainerCommandsTest {
     }
 
     @Test
+    void readsTheDetailsOfTheContainer() {
+        var commands = commandsPrinting("""
+                [
+                  {
+                    "id": "web-01",
+                    "configuration": {
+                      "creationDate": "2026-08-18T15:54:46Z",
+                      "image": {"reference": "docker.io/library/nginx:1.27"},
+                      "resources": {"cpus": 2, "memoryInBytes": 1073741824},
+                      "platform": {"architecture": "arm64", "os": "linux"},
+                      "networks": [{"options": {"hostname": "web-01"}}],
+                      "initProcess": {
+                        "executable": "docker-entrypoint.sh",
+                        "arguments": ["nginx", "-g", "daemon off;"],
+                        "user": {"id": {"gid": 20, "uid": 501}}
+                      },
+                      "publishedPorts": [
+                        {"containerPort": 80, "hostAddress": "0.0.0.0", "hostPort": 8080, "proto": "tcp"}
+                      ],
+                      "runtimeHandler": "container-runtime-linux",
+                      "rosetta": true,
+                      "virtualization": false
+                    },
+                    "status": {"state": "running", "networks": [], "startedDate": "2026-08-31T18:56:47Z"}
+                  }
+                ]
+                """);
+
+        var details = commands.list().getFirst().details();
+
+        assertEquals(new Container.Details(
+                "linux/arm64", "web-01", "uid 501, gid 20", "docker-entrypoint.sh nginx -g daemon off;",
+                List.of("0.0.0.0:8080 → 80/tcp"), "container-runtime-linux", false, true,
+                "2026-08-18T15:54:46Z", "2026-08-31T18:56:47Z"), details);
+    }
+
+    @Test
     void showsTheMemoryInMegabytes() {
         assertEquals("512 MB", new Container("id", "image", "stopped", "", 1, 536870912L).memory());
     }
 
     @Test
-    void failsWhenTheCliFails() throws IOException {
-        var commands = new ContainerCommands(cliRunning("""
+    void failsWhenTheCliFails() {
+        var commands = new ContainerCommands(cli.running("""
                 #!/bin/sh
                 echo "no such command" >&2
                 exit 1
@@ -84,22 +116,25 @@ class ContainerCommandsTest {
         assertTrue(failure.getMessage().contains("no such command"), failure.getMessage());
     }
 
-    private ContainerCommands commandsPrinting(String json) throws IOException {
-        return new ContainerCommands(cliRunning("""
+    @Test
+    void failsWhenStartFails() {
+        var commands = new ContainerCommands(cli.running("""
+                #!/bin/sh
+                echo "container not found" >&2
+                exit 1
+                """));
+
+        var failure = assertThrows(AppleContainerCliException.class, () -> commands.start("web-01"));
+
+        assertTrue(failure.getMessage().contains("container not found"), failure.getMessage());
+    }
+
+    private ContainerCommands commandsPrinting(String json) {
+        return new ContainerCommands(cli.running("""
                 #!/bin/sh
                 cat <<'JSON'
                 %s
                 JSON
                 """.formatted(json.strip())));
-    }
-
-    private AppleContainerCli cliRunning(String script) throws IOException {
-        var executable = Files.createFile(tempDir.resolve("container"),
-                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x")));
-        Files.writeString(executable, script);
-        return AppleContainerCli.builder()
-                .executable(executable.toString())
-                .timeout(Duration.ofSeconds(5))
-                .build();
     }
 }

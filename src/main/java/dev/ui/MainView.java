@@ -140,10 +140,10 @@ public final class MainView implements Element {
             var index = i;
             var tab = tabs.get(i);
             commands.add(new Command("open " + tab.title().toLowerCase(),
-                    () -> tabsState.select(index)));
+                    String.valueOf(i + 1), () -> tabsState.select(index)));
         }
-        commands.add(new Command("show the keys", help::toggle));
-        commands.add(new Command("quit", quit));
+        commands.add(new Command("show the keys", KeyBindings.shortcutKey(KeyBindings.TOGGLE_HELP), help::toggle));
+        commands.add(new Command("quit", KeyBindings.shortcutKey(Actions.QUIT), quit));
         return commands;
     }
 

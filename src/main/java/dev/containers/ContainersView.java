@@ -4,29 +4,45 @@ import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.toolkit.Toolkit;
 import dev.ui.Align;
+import dev.ui.KeyBindings;
 import dev.ui.TableController;
 import dev.ui.TableView;
 
 import java.util.List;
 
-/** The columns of the "Containers" tab. */
-public final class ContainersView {
+/** The table of the "Containers" tab, with its columns. */
+public final class ContainersView extends TableView<Container> {
 
-    private ContainersView() {
+    private ContainersView(TableController<Container> controller) {
+        super(controller, columns());
     }
 
-    public static TableView<Container> of(TableController<Container> controller) {
-        return new TableView<>(controller, List.of(
-                TableView.Column.of("ID", Toolkit.length(40), Container::id)
+    /** The tab with its one-key shortcuts: s start, x stop, t restart, P prune. */
+    public static ContainersView of(TableController<Container> controller, ContainersController actions) {
+        var view = of(controller);
+        view.on(KeyBindings.START, actions::start);
+        view.on(KeyBindings.STOP, actions::stop);
+        view.on(KeyBindings.RESTART, actions::restart);
+        view.on(KeyBindings.PRUNE, actions::prune);
+        return view;
+    }
+
+    public static ContainersView of(TableController<Container> controller) {
+        return new ContainersView(controller);
+    }
+
+    private static List<Column<Container>> columns() {
+        return List.of(
+                Column.of("ID", Toolkit.length(40), Container::id)
                         .style(_ -> Style.EMPTY.fg(Color.CYAN)),
-                TableView.Column.of("IMAGE", Toolkit.fill(), Container::image),
-                TableView.Column.of("STATE", Toolkit.length(10), Container::state)
+                Column.of("IMAGE", Toolkit.fill(), Container::image),
+                Column.of("STATE", Toolkit.length(10), Container::state)
                         .style(ContainersView::stateStyle),
-                TableView.Column.of("ADDRESS", Toolkit.length(16), Container::address),
-                TableView.Column.of("CPUS", Toolkit.length(5), (Container c) -> String.valueOf(c.cpus()))
+                Column.of("ADDRESS", Toolkit.length(16), Container::address),
+                Column.of("CPUS", Toolkit.length(5), (Container c) -> String.valueOf(c.cpus()))
                         .align(Align.RIGHT),
-                TableView.Column.of("MEMORY", Toolkit.length(9), Container::memory)
-                        .align(Align.RIGHT)));
+                Column.of("MEMORY", Toolkit.length(9), Container::memory)
+                        .align(Align.RIGHT));
     }
 
     static Style stateStyle(Container container) {

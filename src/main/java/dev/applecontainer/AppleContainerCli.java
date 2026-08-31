@@ -56,6 +56,20 @@ public class AppleContainerCli {
     }
 
     /**
+     * Runs the CLI and fails when it exits with an error, so the message can be shown.
+     *
+     * @param args the command and its arguments
+     * @throws AppleContainerCliException if the CLI exited with a code other than 0
+     */
+    public AppleContainerResult runChecked(String... args) {
+        var result = run(args);
+        if (!result.isSuccess()) {
+            throw new AppleContainerCliException(failureMessage(args, result));
+        }
+        return result;
+    }
+
+    /**
      * Runs the CLI with {@code --format json} and parses the result.
      *
      * @param args the command and its arguments
@@ -67,17 +81,25 @@ public class AppleContainerCli {
         argsWithFormat.add("--format");
         argsWithFormat.add("json");
 
-        var result = run(argsWithFormat.toArray(String[]::new));
-        if (!result.isSuccess()) {
-            throw new AppleContainerCliException("%s %s failed with exit code %d: %s"
-                    .formatted(executable, String.join(" ", argsWithFormat), result.exitCode(), result.stdErr().strip()));
-        }
+        var result = runChecked(argsWithFormat.toArray(String[]::new));
 
         try {
             return JSON_READER.treeFrom(result.stdOut());
         } catch (JacksonException e) {
             throw new AppleContainerCliException("Cannot read JSON from " + String.join(" ", argsWithFormat), e);
         }
+    }
+
+    /** Prefers what the CLI printed on stderr, then stdout, then a plain exit code. */
+    private String failureMessage(String[] args, AppleContainerResult result) {
+        var command = executable + " " + String.join(" ", args);
+        var reason = result.stdErr().strip();
+        if (reason.isEmpty()) {
+            reason = result.stdOut().strip();
+        }
+        return reason.isEmpty()
+                ? "%s failed with exit code %d".formatted(command, result.exitCode())
+                : "%s failed with exit code %d: %s".formatted(command, result.exitCode(), reason);
     }
 
     private static String readStream(InputStream stream) throws IOException {

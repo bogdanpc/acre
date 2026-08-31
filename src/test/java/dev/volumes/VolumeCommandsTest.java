@@ -1,25 +1,20 @@
 package dev.volumes;
 
-import dev.applecontainer.AppleContainerCli;
+import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class VolumeCommandsTest {
 
-    @TempDir
-    Path tempDir;
+    @RegisterExtension
+    final MockContainerCli cli = new MockContainerCli();
 
     @Test
-    void readsTheVolumeListFromTheJsonOutput() throws IOException {
+    void readsTheVolumeListFromTheJsonOutput() {
         var commands = commandsPrinting("""
                 [
                   {"id": "pgdata", "configuration": {
@@ -36,7 +31,7 @@ class VolumeCommandsTest {
     }
 
     @Test
-    void answersZeroWhenTheSizeIsMissing() throws IOException {
+    void answersZeroWhenTheSizeIsMissing() {
         var commands = commandsPrinting("""
                 [{"configuration": {"name": "logs", "driver": "local"}}]
                 """);
@@ -44,19 +39,12 @@ class VolumeCommandsTest {
         assertEquals(List.of(new Volume("logs", "local", "", 0, "")), commands.list());
     }
 
-    private VolumeCommands commandsPrinting(String json) throws IOException {
-        var script = """
+    private VolumeCommands commandsPrinting(String json) {
+        return new VolumeCommands(cli.running("""
                 #!/bin/sh
                 cat <<'JSON'
                 %s
                 JSON
-                """.formatted(json.strip());
-        var executable = Files.createFile(tempDir.resolve("container"),
-                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x")));
-        Files.writeString(executable, script);
-        return new VolumeCommands(AppleContainerCli.builder()
-                .executable(executable.toString())
-                .timeout(Duration.ofSeconds(5))
-                .build());
+                """.formatted(json.strip())));
     }
 }

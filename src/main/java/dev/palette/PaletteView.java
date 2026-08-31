@@ -1,22 +1,18 @@
 package dev.palette;
 
-import static dev.tamboui.toolkit.Toolkit.dialog;
-import static dev.tamboui.toolkit.Toolkit.list;
-import static dev.tamboui.toolkit.Toolkit.richText;
-import static dev.tamboui.toolkit.Toolkit.row;
-import static dev.tamboui.toolkit.Toolkit.spacer;
-import static dev.tamboui.toolkit.Toolkit.text;
-
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
 import dev.tamboui.text.Text;
 import dev.tamboui.toolkit.element.Element;
-import dev.tamboui.toolkit.element.StyledElement;
+import dev.tamboui.widgets.table.Cell;
+import dev.tamboui.widgets.table.Row;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.tamboui.toolkit.Toolkit.*;
 
 /**
  * Command palette view:  Display matched list with a prompt.
@@ -28,14 +24,11 @@ public final class PaletteView {
 
     private static final Style SELECTED = Style.EMPTY.bg(Color.rgb(0x26, 0x4F, 0x78)).bold();
     private static final Style HIT = Style.EMPTY.fg(ACCENT).bold();
-
-    private static final String MARKER = " ❯ ";
+    private static final String MARKER = "❯";
     private static final int MARKER_WIDTH = 3;
 
     private static final int WIDTH = 62;
     private static final int ROWS = 12;
-    private static final int LABEL_WIDTH = WIDTH - 2 - MARKER_WIDTH;
-
     private static final int CHROME_HEIGHT = 6;
 
     private final PaletteController controller;
@@ -59,15 +52,13 @@ public final class PaletteView {
         if (matches.isEmpty()) {
             return indented(text("no command matches").dim());
         }
-        var items = new ArrayList<StyledElement<?>>(matches.size());
-        for (var match : matches) {
-            items.add(richText(highlight(match)));
-        }
-        return list(items.toArray(StyledElement<?>[]::new))
+        return table()
+                .rows(matches.stream().map(this::commandRow).toList())
+                .widths(fill(), length(8))
+                .columnSpacing(1)
+                .state(controller.rows())
                 .highlightSymbol(MARKER)
                 .highlightStyle(SELECTED)
-                .selected(controller.index())
-                .autoScroll()
                 .length(rows);
     }
 
@@ -77,7 +68,7 @@ public final class PaletteView {
         var under = caret < text.length() ? text.substring(caret, caret + 1) : " ";
         var after = caret < text.length() ? text.substring(caret + 1) : "";
         return richText(Text.from(Line.from(
-                Span.styled(" > ", Style.EMPTY.fg(ACCENT).bold()),
+                Span.styled("> ", Style.EMPTY.fg(ACCENT).bold()),
                 Span.raw(text.substring(0, caret)),
                 Span.styled(under, Style.EMPTY.reversed()),
                 Span.raw(after)))).length(1);
@@ -91,21 +82,38 @@ public final class PaletteView {
         return row(spacer(MARKER_WIDTH), element).length(1);
     }
 
+    private Row commandRow(Command command) {
+        return Row.from(Cell.from(label(command)), Cell.from(key(command)));
+    }
+
+    private Line label(Command command) {
+        var label = command.label();
+        return Line.from(createSpans(label, hits(label)));
+    }
+
     /**
-     * Draws the command label with the matched characters .
+     * The shortcut key
      */
-    private Text highlight(Command command) {
-        var label = truncate(command.label());
-        var hit = new boolean[label.length()];
+    private static Span key(Command command) {
+        if (!command.hasShortcut()) {
+            return Span.raw("");
+        }
+        var key = "[" + command.shortcut() + "]";
+        return Span.styled(key, Style.EMPTY.dim());
+    }
+
+    /**
+     * One flag per label character: true where the query matched.
+     */
+    private boolean[] hits(String label) {
+        var hits = new boolean[label.length()];
         var positions = Fuzzy.match(controller.query().text(), label)
                 .map(Fuzzy.Match::positions)
                 .orElse(new int[0]);
         for (int position : positions) {
-            hit[position] = true;
+            hits[position] = true;
         }
-
-        var spans = createSpans(label, hit);
-        return Text.from(Line.from(spans));
+        return hits;
     }
 
     /**
@@ -124,9 +132,5 @@ public final class PaletteView {
             start = end;
         }
         return spans;
-    }
-
-    private static String truncate(String text) {
-        return text.length() <= LABEL_WIDTH ? text : text.substring(0, Math.max(0, LABEL_WIDTH - 1)) + "…";
     }
 }

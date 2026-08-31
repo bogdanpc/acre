@@ -2,8 +2,7 @@ package dev;
 
 import dev.applecontainer.AppleContainerCli;
 import dev.applecontainer.SystemCommands;
-import dev.containers.ContainerCommands;
-import dev.containers.ContainersView;
+import dev.containers.ContainersTab;
 import dev.images.ImageCommands;
 import dev.images.ImagesView;
 import dev.tamboui.toolkit.app.ToolkitApp;
@@ -41,18 +40,21 @@ public class AppTui extends ToolkitApp {
         return TuiConfig.builder()
                 .mouseCapture(true)
                 .bindings(KeyBindings.get())
-                .pollTimeout(Duration.ofMillis(25))
-                .tickRate(Duration.ofMillis(50))
+                .pollTimeout(Duration.ofMillis(10))
+                .tickRate(Duration.ofMillis(33))
                 .build();
     }
 
     public AppTui(TuiConfig config, AppleContainerCli cli) {
         this.config = config;
-        var containers = new TableController<>("Containers", new ContainerCommands(cli)::list);
+
+        var containers = ContainersTab.of(cli);
+
         var images = new TableController<>("Images", new ImageCommands(cli)::list);
         var volumes = new TableController<>("Volumes", new VolumeCommands(cli)::list);
+
         var tabs = List.of(
-                Tab.of(ContainersView.of(containers)),
+                containers.tab(),
                 Tab.of(ImagesView.of(images)),
                 Tab.of(VolumesView.of(volumes)));
 

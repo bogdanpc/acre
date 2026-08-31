@@ -1,40 +1,28 @@
 package dev.applecontainer;
 
+import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Duration;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppleContainerCliTest {
 
-    @TempDir
-    Path tempDir;
+    @RegisterExtension
+    final MockContainerCli cli = new MockContainerCli();
 
     @Test
-    void passesTheArgumentsAndReturnsWhatTheCliPrinted() throws IOException {
-        var fakeCli = fakeCli("""
+    void passesTheArgumentsAndReturnsWhatTheCliPrinted() {
+        var container = cli.running("""
                 #!/bin/sh
                 echo "called with $*"
                 """);
 
-        var result = AppleContainerCli.builder().executable(fakeCli).timeout(Duration.ofSeconds(5)).build().run("list", "--all");
+        var result = container.run("list", "--all");
 
         assertTrue(result.isSuccess());
         assertEquals("called with list --all\n", result.stdOut());
         assertEquals("", result.stdErr());
     }
-
-    private String fakeCli(String script) throws IOException {
-        var executable = Files.createFile(tempDir.resolve("container"),
-                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x")));
-        Files.writeString(executable, script);
-        return executable.toString();
-    }
-
 }
