@@ -5,13 +5,39 @@
 
     <groupId>dev</groupId>
     <artifactId>acre</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <name>acre</name>
     <description>Apple Container Resource Explorer - Terminal UI for Apple's container CLI on macOS</description>
+
+    <url>https://github.com/${github.owner}/acre</url>
+    <inceptionYear>2026</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>${github.owner}</id>
+            <name>Bogdan Pop-Cimpean</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/${github.owner}/acre</url>
+        <connection>scm:git:https://github.com/${github.owner}/acre.git</connection>
+        <developerConnection>scm:git:git@github.com:${github.owner}/acre.git</developerConnection>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
+        <github.owner>bogdanpc</github.owner>
+        <jreleaser.version>1.26.0</jreleaser.version>
         <jackson.version>3.2.2</jackson.version>
     </properties>
 
@@ -113,6 +139,69 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jreleaser</groupId>
+                <artifactId>jreleaser-maven-plugin</artifactId>
+                <version>${jreleaser.version}</version>
+                <configuration>
+                    <jreleaser>
+                        <project>
+                            <copyright>Copyright 2026 Bogdan Pop-Cimpean</copyright>
+                            <license>Apache-2.0</license>
+                            <stereotype>CLI</stereotype>
+                            <links>
+                                <homepage>https://github.com/${github.owner}/acre</homepage>
+                            </links>
+                            <languages>
+                                <java>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>25</version>
+                                    <mainClass>dev.App</mainClass>
+                                </java>
+                            </languages>
+                        </project>
+
+                        <release>
+                            <github>
+                                <owner>${github.owner}</owner>
+                                <name>acre</name>
+                                <changelog>
+                                    <formatted>ALWAYS</formatted>
+                                    <format>- {{commitShortHash}} {{commitTitle}}</format>
+                                    <contributors>
+                                        <enabled>false</enabled>
+                                    </contributors>
+                                </changelog>
+                            </github>
+                        </release>
+
+                        <distributions>
+                            <acre>
+                                <type>SINGLE_JAR</type>
+                                <artifacts>
+                                    <artifact>
+                                        <path>target/${project.artifactId}-${project.version}.jar</path>
+                                    </artifact>
+                                </artifacts>
+                                <jbang>
+                                    <active>ALWAYS</active>
+                                </jbang>
+                            </acre>
+                        </distributions>
+
+                        <packagers>
+                            <jbang>
+                                <repository>
+                                    <owner>${github.owner}</owner>
+                                    <name>jbang-catalog</name>
+                                </repository>
+                            </jbang>
+                        </packagers>
+                    </jreleaser>
+                </configuration>
             </plugin>
         </plugins>
     </build>
