@@ -1,6 +1,6 @@
 package dev.ui;
 
-import dev.applecontainer.AppleContainerCliException;
+import dev.applecontainer.CliResult;
 import dev.tamboui.toolkit.Toolkit;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.widgets.table.TableState;
@@ -29,11 +29,11 @@ public final class TableController<T> {
     private final TableState state = new TableState();
     private final AtomicReference<Optional<String>> actionFailure = new AtomicReference<>(Optional.empty());
 
-    public TableController(String title, Supplier<List<T>> source) {
+    public TableController(String title, Supplier<CliResult<List<T>>> source) {
         this(title, new Loader<>(source, List.of()), DEFAULT_EXECUTOR);
     }
 
-    public TableController(String title, Supplier<List<T>> source, Executor executor) {
+    public TableController(String title, Supplier<CliResult<List<T>>> source, Executor executor) {
         this(title, new Loader<>(source, List.of(), executor), executor);
     }
 
@@ -60,24 +60,20 @@ public final class TableController<T> {
         rows.reload();
     }
 
-    public void execute(Runnable action) {
+    /** Runs a command and shows its failure message on the last row. */
+    public void execute(Supplier<CliResult<?>> action) {
         clearActionFailure();
         executor.execute(() -> {
             try {
-                action.run();
-            } catch (AppleContainerCliException e) {
-                actionFailure.set(Optional.of(String.valueOf(e.getMessage())));
+                if (action.get() instanceof CliResult.Failure<?>(var message)) {
+                    actionFailure.set(Optional.of(message));
+                }
             } catch (RuntimeException e) {
                 actionFailure.set(Optional.of(String.valueOf(e)));
             } finally {
                 rows.reload();
             }
         });
-    }
-
-    /** @return the last failed action message, or empty when the last action was fine */
-    public Optional<String> actionFailure() {
-        return actionFailure.get();
     }
 
     public void moveDown() {
@@ -90,7 +86,7 @@ public final class TableController<T> {
         state.selectPrevious();
     }
 
-    /** Drops the message once the user moves on, so it never outlives the row it is about. */
+    /** Clear the notification message */
     private void clearActionFailure() {
         actionFailure.set(Optional.empty());
     }
@@ -138,9 +134,6 @@ public final class TableController<T> {
                 Toolkit.text("Check it is running, then press r to reload.").dim());
     }
 
-    /**
-     * Matches the selected row to the current row count and preserve the column layout to display the row selected marker
-     */
     private void syncSelectedRow(int rowCount) {
         if (rowCount == 0) {
             state.clearSelection();

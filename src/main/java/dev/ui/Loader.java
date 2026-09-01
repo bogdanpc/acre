@@ -1,6 +1,6 @@
 package dev.ui;
 
-import dev.applecontainer.AppleContainerCliException;
+import dev.applecontainer.CliResult;
 
 import java.time.Duration;
 import java.util.concurrent.Executor;
@@ -14,7 +14,7 @@ public final class Loader<T> {
     private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
             Thread.ofVirtual().name("acre-loader-", 0).factory());
 
-    private final Supplier<T> source;
+    private final Supplier<CliResult<T>> source;
     private final T initial;
     private final Executor executor;
 
@@ -26,11 +26,11 @@ public final class Loader<T> {
     private volatile long lastLoad;
     private volatile Duration refreshAfter;
 
-    public Loader(Supplier<T> source, T initial) {
+    public Loader(Supplier<CliResult<T>> source, T initial) {
         this(source, initial, DEFAULT_EXECUTOR);
     }
 
-    public Loader(Supplier<T> source, T initial, Executor executor) {
+    public Loader(Supplier<CliResult<T>> source, T initial, Executor executor) {
         this.source = source;
         this.initial = initial;
         this.executor = executor;
@@ -38,7 +38,7 @@ public final class Loader<T> {
     }
 
     public static <T> Loader<T> of(T value) {
-        return new Loader<>(() -> value, value, Runnable::run);
+        return new Loader<>(() -> CliResult.success(value), value, Runnable::run);
     }
 
 
@@ -68,11 +68,16 @@ public final class Loader<T> {
         }
         executor.execute(() -> {
             try {
-                value.set(source.get());
-                failure.set(null);
-            } catch (AppleContainerCliException e) {
-                value.set(initial);
-                failure.set(e.getMessage());
+                switch (source.get()) {
+                    case CliResult.Success<T>(var loaded) -> {
+                        value.set(loaded);
+                        failure.set(null);
+                    }
+                    case CliResult.Failure<T>(var message) -> {
+                        value.set(initial);
+                        failure.set(message);
+                    }
+                }
             } catch (RuntimeException e) {
                 value.set(initial);
                 failure.set(String.valueOf(e));

@@ -1,6 +1,7 @@
 package dev.images;
 
 import dev.applecontainer.AppleContainerCli;
+import dev.applecontainer.CliResult;
 import tools.jackson.jr.stree.JrsValue;
 
 import java.util.List;
@@ -17,11 +18,12 @@ public class ImageCommands {
 
     /**
      * Apple container images
-     *
-     * @throws dev.applecontainer.AppleContainerCliException if the CLI failed or printed something that is not JSON
      */
-    public List<ContainerImage> list() {
-        var listed = cli.runJson("image", "list");
+    public CliResult<List<ContainerImage>> list() {
+        return cli.runJson(ImageCommands::images, "image", "list");
+    }
+
+    private static List<ContainerImage> images(JrsValue listed) {
         return IntStream.range(0, listed.size())
                 .mapToObj(i -> new ContainerImage(text(listed.path(i).path("configuration").path("name"))))
                 .toList();

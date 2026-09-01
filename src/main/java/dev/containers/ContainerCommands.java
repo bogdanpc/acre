@@ -1,6 +1,7 @@
 package dev.containers;
 
 import dev.applecontainer.AppleContainerCli;
+import dev.applecontainer.CliResult;
 import tools.jackson.jr.stree.JrsValue;
 
 import java.util.List;
@@ -20,29 +21,40 @@ public class ContainerCommands {
     /**
      * Lists the containers.
      */
-    public List<Container> list() {
-        var listed = cli.runJson("ls", "--all");
+    public CliResult<List<Container>> list() {
+        return cli.runJson(ContainerCommands::containers, "ls", "--all");
+    }
+
+    public CliResult<List<String>> logs(String containerId, int tail) {
+        return cli.run(ContainerCommands::lines, "logs", "-n", String.valueOf(tail), containerId);
+    }
+
+    public CliResult<String> start(String id) {
+        return cli.run("start", id);
+    }
+
+    public CliResult<String> stop(String id) {
+        return cli.run("stop", id);
+    }
+
+    public CliResult<String> restart(String id) {
+        return cli.run("restart", id);
+    }
+
+    public CliResult<String> delete(String id) {
+        return cli.run("delete", id);
+    }
+
+    public CliResult<String> prune() {
+        return cli.run("prune");
+    }
+
+    private static List<Container> containers(JrsValue listed) {
         return values(listed).map(ContainerCommands::container).toList();
     }
 
-    public void start(String id) {
-        cli.runChecked("start", id);
-    }
-
-    public void stop(String id) {
-        cli.runChecked("stop", id);
-    }
-
-    public void restart(String id) {
-        cli.runChecked("restart", id);
-    }
-
-    public void delete(String id) {
-        cli.runChecked("delete", id);
-    }
-
-    public void prune() {
-        cli.runChecked("prune");
+    private static List<String> lines(String output) {
+        return output.isBlank() ? List.of() : List.of(output.stripTrailing().split("\\R", -1));
     }
 
     private static Container container(JrsValue node) {
@@ -71,7 +83,16 @@ public class ContainerCommands {
                 flag(configuration.path("virtualization")),
                 flag(configuration.path("rosetta")),
                 text(configuration.path("creationDate")),
-                text(status.path("startedDate")));
+                text(status.path("startedDate")),
+                mounts(configuration.path("mounts")));
+    }
+
+    private static List<Container.Mount> mounts(JrsValue mounts) {
+        return values(mounts).map(mount -> new Container.Mount(
+                        text(mount.path("type").path("volume").path("name")),
+                        text(mount.path("destination")),
+                        text(mount.path("source"))))
+                .toList();
     }
 
     private static String platform(JrsValue node) {

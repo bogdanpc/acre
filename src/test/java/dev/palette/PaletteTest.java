@@ -1,5 +1,6 @@
 package dev.palette;
 
+import dev.applecontainer.CliResult;
 import dev.images.ContainerImage;
 import dev.images.ImagesView;
 import dev.tamboui.tui.event.KeyCode;
@@ -89,7 +90,7 @@ class PaletteTest {
 
     @Test
     void leavesTheRowPlainWhenTheCommandHasNoKey() {
-        var images = ImagesView.of(new TableController<ContainerImage>("Images", List::of, Runnable::run));
+        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
         var tab = new Tab("Images", images::element, () -> List.of(new Command("no key here", () -> {})));
         terminal.show(new MainView(() -> {}, List.of(tab)));
 
@@ -100,7 +101,7 @@ class PaletteTest {
 
     @Test
     void cutsALongLabelSoTheKeyStaysOnTheRow() {
-        var images = ImagesView.of(new TableController<ContainerImage>("Images", List::of, Runnable::run));
+        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
         var tab = new Tab("Images", images::element, () -> List.of(
                 new Command("a very long command label that will not fit inside the palette row",
                         "enter", () -> {})));
@@ -146,7 +147,7 @@ class PaletteTest {
         var loads = new AtomicInteger();
         var images = ImagesView.of(new TableController<>("Images", () -> {
             loads.incrementAndGet();
-            return List.of(new ContainerImage("docker.io/library/redis:8"));
+            return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8")));
         }, Runnable::run));
         terminal.show(new MainView(() -> {}, List.of(Tab.of(images))));
 

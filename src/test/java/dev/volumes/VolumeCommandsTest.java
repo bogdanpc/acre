@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 
+import static dev.testing.CliResults.value;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class VolumeCommandsTest {
@@ -24,7 +25,7 @@ class VolumeCommandsTest {
                 ]
                 """);
 
-        var volumes = commands.list();
+        var volumes = value(commands.list());
 
         assertEquals(List.of(new Volume(
                 "pgdata", "local", "ext4", 549755813888L, "/Users/me/volumes/pgdata/volume.img")), volumes);
@@ -36,7 +37,7 @@ class VolumeCommandsTest {
                 [{"configuration": {"name": "logs", "driver": "local"}}]
                 """);
 
-        assertEquals(List.of(new Volume("logs", "local", "", 0, "")), commands.list());
+        assertEquals(List.of(new Volume("logs", "local", "", 0, "")), value(commands.list()));
     }
 
     private VolumeCommands commandsPrinting(String json) {

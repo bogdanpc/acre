@@ -1,6 +1,7 @@
 package dev.volumes;
 
 import dev.applecontainer.AppleContainerCli;
+import dev.applecontainer.CliResult;
 import tools.jackson.jr.stree.JrsNumber;
 import tools.jackson.jr.stree.JrsValue;
 
@@ -19,11 +20,13 @@ public class VolumeCommands {
     /**
      * Lists the volumes held locally.
      *
-     * @return one entry per volume, in the order the CLI reported them
-     * @throws dev.applecontainer.AppleContainerCliException if the CLI failed or printed something that is not JSON
+     * @return one entry per volume in the order the CLI reported them, or the reason it failed
      */
-    public List<Volume> list() {
-        var listed = cli.runJson("volume", "list");
+    public CliResult<List<Volume>> list() {
+        return cli.runJson(VolumeCommands::volumes, "volume", "list");
+    }
+
+    private static List<Volume> volumes(JrsValue listed) {
         return IntStream.range(0, listed.size())
                 .mapToObj(i -> volume(listed.path(i)))
                 .toList();

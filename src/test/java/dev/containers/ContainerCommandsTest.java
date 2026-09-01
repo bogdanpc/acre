@@ -1,14 +1,14 @@
 package dev.containers;
 
-import dev.applecontainer.AppleContainerCliException;
 import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 
+import static dev.testing.CliResults.message;
+import static dev.testing.CliResults.value;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ContainerCommandsTest {
@@ -34,7 +34,7 @@ class ContainerCommandsTest {
                 ]
                 """);
 
-        var containers = commands.list();
+        var containers = value(commands.list());
 
         assertEquals(List.of(new Container(
                 "web-01", "docker.io/library/nginx:1.27", "running", "192.168.64.3", 2, 1073741824L)), containers);
@@ -55,7 +55,7 @@ class ContainerCommandsTest {
                 ]
                 """);
 
-        var containers = commands.list();
+        var containers = value(commands.list());
 
         assertEquals(List.of(new Container(
                 "cache-01", "docker.io/library/redis:7", "stopped", "", 1, 536870912L)), containers);
@@ -83,19 +83,27 @@ class ContainerCommandsTest {
                       ],
                       "runtimeHandler": "container-runtime-linux",
                       "rosetta": true,
-                      "virtualization": false
+                      "virtualization": false,
+                      "mounts": [
+                        {
+                          "destination": "/var/lib/postgresql",
+                          "source": "/Users/me/volume.img",
+                          "type": {"volume": {"name": "pgdata", "format": "ext4"}}
+                        }
+                      ]
                     },
                     "status": {"state": "running", "networks": [], "startedDate": "2026-08-31T18:56:47Z"}
                   }
                 ]
                 """);
 
-        var details = commands.list().getFirst().details();
+        var details = value(commands.list()).getFirst().details();
 
         assertEquals(new Container.Details(
                 "linux/arm64", "web-01", "uid 501, gid 20", "docker-entrypoint.sh nginx -g daemon off;",
                 List.of("0.0.0.0:8080 → 80/tcp"), "container-runtime-linux", false, true,
-                "2026-08-18T15:54:46Z", "2026-08-31T18:56:47Z"), details);
+                "2026-08-18T15:54:46Z", "2026-08-31T18:56:47Z",
+                List.of(new Container.Mount("pgdata", "/var/lib/postgresql", "/Users/me/volume.img"))), details);
     }
 
     @Test
@@ -111,9 +119,9 @@ class ContainerCommandsTest {
                 exit 1
                 """));
 
-        var failure = assertThrows(AppleContainerCliException.class, commands::list);
+        var failure = message(commands.list());
 
-        assertTrue(failure.getMessage().contains("no such command"), failure.getMessage());
+        assertTrue(failure.contains("no such command"), failure);
     }
 
     @Test
@@ -124,9 +132,9 @@ class ContainerCommandsTest {
                 exit 1
                 """));
 
-        var failure = assertThrows(AppleContainerCliException.class, () -> commands.start("web-01"));
+        var failure = message(commands.start("web-01"));
 
-        assertTrue(failure.getMessage().contains("container not found"), failure.getMessage());
+        assertTrue(failure.contains("container not found"), failure);
     }
 
     private ContainerCommands commandsPrinting(String json) {

@@ -10,11 +10,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class AppleContainerCli {
 
@@ -30,7 +30,7 @@ public class AppleContainerCli {
         this.timeout = timeout;
     }
 
-    public AppleContainerResult run(String... args) {
+    public CliResult<String> run(String... args) {
         var commands = new ArrayList<String>(args.length + 1);
         commands.add(executable);
         commands.addAll(List.of(args));
@@ -42,64 +42,73 @@ public class AppleContainerCli {
 
             if (!p.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
                 p.destroyForcibly();
-                throw new AppleContainerCliException("Timeout %s for Apple container".formatted(timeout.toString()));
+                return failed(args, "timed out after " + timeout);
             }
-            return new AppleContainerResult(p.exitValue(), stdOut.get(), stdErr.get());
+            return p.exitValue() == 0
+                    ? CliResult.success(stdOut.get())
+                    : failed(args, exitReason(p.exitValue(), stdOut.get(), stdErr.get()));
         } catch (IOException e) {
-            throw new AppleContainerCliException("Cannot run " + Arrays.toString(args));
+            return failed(args, "cannot start");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new AppleContainerCliException("Interrupted while trying to run " + Arrays.toString(args));
+            return failed(args, "interrupted");
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            return failed(args, "cannot read the output");
         }
     }
 
     /**
-     * Runs the CLI and fails when it exits with an error, so the message can be shown.
-     *
-     * @param args the command and its arguments
-     * @throws AppleContainerCliException if the CLI exited with a code other than 0
+     * Runs the CLI
+     * @param reader transform stdout text into the answer
+     * @param args command and its arguments
      */
-    public AppleContainerResult runChecked(String... args) {
-        var result = run(args);
-        if (!result.isSuccess()) {
-            throw new AppleContainerCliException(failureMessage(args, result));
-        }
-        return result;
+    public <T> CliResult<T> run(Function<String, T> reader, String... args) {
+        return switch (run(args)) {
+            case CliResult.Success<String>(var stdOut) -> CliResult.success(reader.apply(stdOut));
+            case CliResult.Failure<String>(var message) -> CliResult.failure(message);
+        };
     }
 
     /**
-     * Runs the CLI with {@code --format json} and parses the result.
+     * Runs the CLI with {@code --format json}
      *
+     * @param reader turns the parsed tree into the answer
      * @param args the command and its arguments
-     * @throws AppleContainerCliException if the CLI failed or output is not JSON
      */
-    public JrsValue runJson(String... args) {
+    public <T> CliResult<T> runJson(Function<JrsValue, T> reader, String... args) {
         var argsWithFormat = new ArrayList<String>(args.length + 2);
         argsWithFormat.addAll(List.of(args));
         argsWithFormat.add("--format");
         argsWithFormat.add("json");
 
-        var result = runChecked(argsWithFormat.toArray(String[]::new));
-
-        try {
-            return JSON_READER.treeFrom(result.stdOut());
-        } catch (JacksonException e) {
-            throw new AppleContainerCliException("Cannot read JSON from " + String.join(" ", argsWithFormat), e);
-        }
+        return switch (run(argsWithFormat.toArray(String[]::new))) {
+            case CliResult.Success<String>(var json) -> parse(json, argsWithFormat, reader);
+            case CliResult.Failure<String>(var message) -> CliResult.failure(message);
+        };
     }
 
-    /** Prefers what the CLI printed on stderr, then stdout, then a plain exit code. */
-    private String failureMessage(String[] args, AppleContainerResult result) {
-        var command = executable + " " + String.join(" ", args);
-        var reason = result.stdErr().strip();
-        if (reason.isEmpty()) {
-            reason = result.stdOut().strip();
+    private static <T> CliResult<T> parse(String json, List<String> args, Function<JrsValue, T> reader) {
+        JrsValue tree;
+        try {
+            tree = JSON_READER.treeFrom(json);
+        } catch (JacksonException e) {
+            return CliResult.failure("Cannot read JSON from " + String.join(" ", args));
         }
-        return reason.isEmpty()
-                ? "%s failed with exit code %d".formatted(command, result.exitCode())
-                : "%s failed with exit code %d: %s".formatted(command, result.exitCode(), reason);
+        return CliResult.success(reader.apply(tree));
+    }
+
+    private <T> CliResult<T> failed(String[] args, String reason) {
+        return CliResult.failure("%s %s: %s".formatted(executable, String.join(" ", args), reason));
+    }
+
+    private static String exitReason(int exitCode, String stdOut, String stdErr) {
+        var printed = stdErr.strip();
+        if (printed.isEmpty()) {
+            printed = stdOut.strip();
+        }
+        return printed.isEmpty()
+                ? "exit code %d".formatted(exitCode)
+                : "exit code %d, %s".formatted(exitCode, printed);
     }
 
     private static String readStream(InputStream stream) throws IOException {

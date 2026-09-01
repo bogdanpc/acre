@@ -13,10 +13,6 @@ public class SystemCommands {
      * @return true when {@code container system status} succeeded
      */
     public boolean isRunning() {
-        try {
-            return cli.run("system", "status").isSuccess();
-        } catch (AppleContainerCliException e) {
-            return false;
-        }
+        return cli.run("system", "status") instanceof CliResult.Success;
     }
 }

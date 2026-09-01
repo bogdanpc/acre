@@ -1,14 +1,14 @@
 package dev.images;
 
-import dev.applecontainer.AppleContainerCliException;
 import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 
+import static dev.testing.CliResults.message;
+import static dev.testing.CliResults.value;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ImageCommandsTest {
@@ -25,7 +25,7 @@ class ImageCommandsTest {
                 ]
                 """);
 
-        var images = commands.list();
+        var images = value(commands.list());
 
         assertEquals(List.of(
                 new ContainerImage("docker.io/library/postgres:18-alpine"),
@@ -40,9 +40,9 @@ class ImageCommandsTest {
                 exit 1
                 """));
 
-        var failure = assertThrows(AppleContainerCliException.class, commands::list);
+        var failure = message(commands.list());
 
-        assertTrue(failure.getMessage().contains("no such command"), failure.getMessage());
+        assertTrue(failure.contains("no such command"), failure);
     }
 
     private ImageCommands commandsPrinting(String json) {
