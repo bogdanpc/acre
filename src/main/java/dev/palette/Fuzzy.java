@@ -45,9 +45,7 @@ public final class Fuzzy {
 
         var matched = new ArrayList<Command>();
         for (var command : commands) {
-            if (match(query, command.label()).isPresent()) {
-                matched.add(command);
-            }
+            match(query, command.label()).ifPresent(_ -> matched.add(command));
         }
 
         return matched;

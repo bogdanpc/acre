@@ -19,6 +19,7 @@ public final class KeyBindings {
     public static final String STOP = "stopContainer";
     public static final String RESTART = "restartContainer";
     public static final String PRUNE = "pruneContainers";
+    public static final String LOGS = "showLogs";
 
     private static final Map<String, String> KEYS = Map.ofEntries(
             Map.entry(RELOAD, "r"),
@@ -28,6 +29,7 @@ public final class KeyBindings {
             Map.entry(STOP, "x"),
             Map.entry(RESTART, "t"),
             Map.entry(PRUNE, "P"),
+            Map.entry(LOGS, "l"),
             Map.entry(Actions.QUIT, "q"),
             Map.entry(Actions.SELECT, "enter"),
             Map.entry(Actions.CANCEL, "esc"));
@@ -58,8 +60,7 @@ public final class KeyBindings {
                 .bind(KeyTrigger.ch(':'), OPEN_PALETTE)
                 .bind(KeyTrigger.ch('h'), Actions.MOVE_LEFT)
                 .bind(KeyTrigger.ch('H'), Actions.MOVE_LEFT)
-                .bind(KeyTrigger.ch('l'), Actions.MOVE_RIGHT)
-                .bind(KeyTrigger.ch('L'), Actions.MOVE_RIGHT)
+                .bind(KeyTrigger.ch('l'), LOGS)
                 .bind(KeyTrigger.ch('s'), START)
                 .bind(KeyTrigger.ch('x'), STOP)
                 .bind(KeyTrigger.ch('t'), RESTART)

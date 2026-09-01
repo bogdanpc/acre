@@ -1,6 +1,7 @@
 package dev;
 
 import dev.applecontainer.AppleContainerCli;
+import dev.applecontainer.CliResult;
 import dev.applecontainer.SystemCommands;
 import dev.containers.ContainersTab;
 import dev.images.ImageCommands;
@@ -14,8 +15,7 @@ import dev.ui.Loader;
 import dev.ui.MainView;
 import dev.ui.Tab;
 import dev.ui.TableController;
-import dev.volumes.VolumeCommands;
-import dev.volumes.VolumesView;
+import dev.volumes.VolumesTab;
 
 import java.time.Duration;
 import java.util.List;
@@ -38,7 +38,7 @@ public class AppTui extends ToolkitApp {
 
     public static TuiConfig defaultConfig() {
         return TuiConfig.builder()
-                .mouseCapture(true)
+                .mouseCapture(false)
                 .bindings(KeyBindings.get())
                 .pollTimeout(Duration.ofMillis(10))
                 .tickRate(Duration.ofMillis(33))
@@ -50,16 +50,18 @@ public class AppTui extends ToolkitApp {
 
         var containers = ContainersTab.of(cli);
 
+        var volumes = VolumesTab.of(cli);
         var images = new TableController<>("Images", new ImageCommands(cli)::list);
-        var volumes = new TableController<>("Volumes", new VolumeCommands(cli)::list);
 
         var tabs = List.of(
                 containers.tab(),
                 Tab.of(ImagesView.of(images)),
-                Tab.of(VolumesView.of(volumes)));
+                volumes.tab());
 
         var system = new SystemCommands(cli);
-        var status = new Loader<>(() -> AppleContainerStatus.of(system.isRunning()), AppleContainerStatus.UNKNOWN)
+        var status = new Loader<>(
+                () -> CliResult.success(AppleContainerStatus.of(system.isRunning())),
+                AppleContainerStatus.UNKNOWN)
                 .refreshEvery(STATUS_REFRESH);
 
         this.view = new MainView(this::quit, status, tabs);

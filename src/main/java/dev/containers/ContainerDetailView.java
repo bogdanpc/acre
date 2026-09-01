@@ -2,7 +2,9 @@ package dev.containers;
 
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
+import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
+import dev.tamboui.text.Text;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.widgets.table.Cell;
@@ -25,7 +27,18 @@ public final class ContainerDetailView {
 
     private static final int LABEL_WIDTH = 15;
     private static final String MISSING = "-";
-    private static final String HINTS = "s start · x stop · t restart · r reload · ↑ ↓ other container · esc back";
+
+    private static final Style KEY = Style.EMPTY.fg(ACCENT).bold();
+    private static final Style HINT = Style.EMPTY.dim();
+    private static final String SEPARATOR = " · ";
+    private static final List<String[]> HINTS = List.of(
+            new String[] {"l", "logs"},
+            new String[] {"s", "start"},
+            new String[] {"x", "stop"},
+            new String[] {"t", "restart"},
+            new String[] {"r", "reload"},
+            new String[] {"↑ ↓", "other container"},
+            new String[] {"esc", "back"});
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy 'at' HH:mm", Locale.ENGLISH);
 
@@ -93,7 +106,15 @@ public final class ContainerDetailView {
     }
 
     private static Element hint() {
-        return text(HINTS).dim().length(1);
+        var spans = new ArrayList<Span>();
+        for (var entry : HINTS) {
+            if (!spans.isEmpty()) {
+                spans.add(Span.styled(SEPARATOR, HINT));
+            }
+            spans.add(Span.styled(entry[0], KEY));
+            spans.add(Span.styled(" " + entry[1], HINT));
+        }
+        return richText(Text.from(Line.from(spans))).length(1);
     }
 
     static String date(String iso, ZoneId zone) {

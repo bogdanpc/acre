@@ -1,5 +1,6 @@
 package dev.testing;
 
+import dev.applecontainer.CliResult;
 import dev.images.ContainerImage;
 import dev.images.ImagesView;
 import dev.ui.MainView;
@@ -22,8 +23,10 @@ public final class Views {
     }
 
     public static List<Tab> imagesAndVolumes() {
-        var images = new TableController<ContainerImage>("Images", List::of, Runnable::run);
-        var volumes = new TableController<Volume>("Volumes", List::of, Runnable::run);
+        var images = new TableController<ContainerImage>(
+                "Images", () -> CliResult.success(List.of()), Runnable::run);
+        var volumes = new TableController<Volume>(
+                "Volumes", () -> CliResult.success(List.of()), Runnable::run);
         return List.of(Tab.of(ImagesView.of(images)), Tab.of(VolumesView.of(volumes)));
     }
 }

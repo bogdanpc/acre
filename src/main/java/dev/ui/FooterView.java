@@ -7,7 +7,7 @@ import dev.tamboui.toolkit.element.Element;
 public final class FooterView {
 
     private static final String HINTS = String.join("  ·  ",
-            "1-3 tabs", "h/l switch", "enter details", "s/x/t start·stop·restart",
+            "1-3 tabs", "enter details", "l logs", "s/x/t start·stop·restart",
             ": commands", "? help", "q quit");
 
     public Element element() {

@@ -1,12 +1,13 @@
 package dev.containers;
 
+import dev.applecontainer.CliResult;
 import dev.palette.Command;
 import dev.ui.KeyBindings;
 import dev.ui.TableController;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ContainersController {
 
@@ -55,9 +56,9 @@ public class ContainersController {
         controller.execute(commands::prune);
     }
 
-    private void onSelected(Consumer<String> action) {
+    private void onSelected(Function<String, CliResult<?>> action) {
         controller.selected()
                 .map(Container::id)
-                .ifPresent(id -> controller.execute(() -> action.accept(id)));
+                .ifPresent(id -> controller.execute(() -> action.apply(id)));
     }
 }
