@@ -20,13 +20,13 @@ A terminal UI for Apple's `container` CLI on macOS. Watch your containers, read 
 Use [JBang](https://www.jbang.dev), (fetches Java 25 for you):
 
 ```
-jbang https://github.com/bogdanpc/acre/releases/download/v<version>/acre-<version>.jar
+jbang acre@bogdanpc/acre
 ```
 
 You can install it as JBang app:
 
 ```
-jbang app install --name acre https://github.com/bogdanpc/acre/releases/download/v<version>/acre-<version>.jar
+jbang app install acre@bogdanpc/acre
 acre
 ```
 

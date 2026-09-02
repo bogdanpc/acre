@@ -1,0 +1,9 @@
+{
+  "aliases": {
+    "acre": {
+      "script-ref": "https://github.com/bogdanpc/acre/releases/latest/download/acre.jar",
+      "description": "Apple Container Resource Explorer, a terminal UI for Apple's container CLI",
+      "java": "25+"
+    }
+  }
+}

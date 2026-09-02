@@ -5,7 +5,7 @@
 
     <groupId>dev</groupId>
     <artifactId>acre</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.2.0</version>
     <name>acre</name>
     <description>Apple Container Resource Explorer - Terminal UI for Apple's container CLI on macOS</description>
 
@@ -178,6 +178,14 @@
                             </github>
                         </release>
 
+                        <files>
+                            <artifacts>
+                                <artifact>
+                                    <path>target/${project.artifactId}.jar</path>
+                                </artifact>
+                            </artifacts>
+                        </files>
+
                         <distributions>
                             <acre>
                                 <type>SINGLE_JAR</type>
@@ -186,20 +194,8 @@
                                         <path>target/${project.artifactId}-${project.version}.jar</path>
                                     </artifact>
                                 </artifacts>
-                                <jbang>
-                                    <active>ALWAYS</active>
-                                </jbang>
                             </acre>
                         </distributions>
-
-                        <packagers>
-                            <jbang>
-                                <repository>
-                                    <owner>${github.owner}</owner>
-                                    <name>jbang-catalog</name>
-                                </repository>
-                            </jbang>
-                        </packagers>
                     </jreleaser>
                 </configuration>
             </plugin>
