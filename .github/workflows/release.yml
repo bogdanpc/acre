@@ -60,7 +60,7 @@ jobs:
       - name: Release
         run: mvn -B --no-transfer-progress jreleaser:full-release -Dgithub.owner=${{ github.repository_owner }}
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.JRELEASER_GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Keep the JReleaser log on failure
         if: failure()
