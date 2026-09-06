@@ -1,8 +1,6 @@
 package dev.ui;
 
 import dev.applecontainer.CliResult;
-import dev.tamboui.toolkit.Toolkit;
-import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.widgets.table.TableState;
 
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -21,13 +18,22 @@ public final class TableController<T> {
     private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
             Thread.ofVirtual().name("acre-action-", 0).factory());
 
-    private static final int MAX_FAILURE_WIDTH = 200;
-
     private final String title;
     private final Loader<List<T>> rows;
     private final Executor executor;
     private final TableState state = new TableState();
     private final AtomicReference<Optional<String>> actionFailure = new AtomicReference<>(Optional.empty());
+
+    public sealed interface Content<T> {
+        record Loading<T>() implements Content<T> {
+        }
+
+        record Failure<T>(String message) implements Content<T> {
+        }
+
+        record Rows<T>(List<T> items, Optional<String> actionFailure) implements Content<T> {
+        }
+    }
 
     public TableController(String title, Supplier<CliResult<List<T>>> source) {
         this(title, new Loader<>(source, List.of()), DEFAULT_EXECUTOR);
@@ -60,7 +66,6 @@ public final class TableController<T> {
         rows.reload();
     }
 
-    /** Runs a command and shows its failure message on the last row. */
     public void execute(Supplier<CliResult<?>> action) {
         clearActionFailure();
         executor.execute(() -> {
@@ -76,6 +81,15 @@ public final class TableController<T> {
         });
     }
 
+    public Content<T> content() {
+        var items = items();
+        var failure = rows.failure();
+        if (failure != null) return new Content.Failure<>(failure);
+        if (items.isEmpty() && rows.loading()) return new Content.Loading<>();
+        syncSelectedRow(items.size());
+        return new Content.Rows<>(items, actionFailure.get());
+    }
+
     public void moveDown() {
         clearActionFailure();
         state.selectNext(items().size());
@@ -86,22 +100,10 @@ public final class TableController<T> {
         state.selectPrevious();
     }
 
-    /** Clear the notification message */
     private void clearActionFailure() {
         actionFailure.set(Optional.empty());
     }
 
-    public Element element(Function<List<T>, Element> body) {
-        var items = rows.value();
-        if (rows.failure() != null) {
-            return Toolkit.panel(title, failure()).rounded();
-        }
-        if (items.isEmpty() && rows.loading()) {
-            return Toolkit.panel(title, Toolkit.text("Loading...").dim()).rounded();
-        }
-        syncSelectedRow(items.size());
-        return dockActionFailure(body.apply(items));
-    }
 
     public Optional<T> selected() {
         var index = state.selected();
@@ -109,29 +111,6 @@ public final class TableController<T> {
         return index == null || index < 0 || index >= items.size()
                 ? Optional.empty()
                 : Optional.of(items.get(index));
-    }
-
-    /** Display error / failed action on the last row. */
-    private Element dockActionFailure(Element table) {
-        return actionFailure.get()
-                .<Element>map(message -> Toolkit.dock()
-                        .center(table)
-                        .bottom(Toolkit.text(oneLine(message)).red(), Toolkit.length(1)))
-                .orElse(table);
-    }
-
-    private static String oneLine(String message) {
-        var flat = message.replace('\n', ' ').replace('\r', ' ').strip();
-        return flat.length() <= MAX_FAILURE_WIDTH ? flat : flat.substring(0, MAX_FAILURE_WIDTH - 1) + "…";
-    }
-
-    /**
-     * Generic error text
-     */
-    private Element failure() {
-        return Toolkit.column(
-                Toolkit.text("Cannot reach Apple Container.").red(),
-                Toolkit.text("Check it is running, then press r to reload.").dim());
     }
 
     private void syncSelectedRow(int rowCount) {

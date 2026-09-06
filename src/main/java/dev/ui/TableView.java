@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 public class TableView<T> {
 
+    private static final int MAX_FAILURE_WIDTH = 200;
     private static final String SELECTED_SYMBOL = "» ";
     private static final Style SELECTED_ROW =
             Style.EMPTY.fg(Color.WHITE).bg(Color.rgb(0x26, 0x4F, 0x78)).bold();
@@ -66,7 +67,9 @@ public class TableView<T> {
                 .on(Actions.MOVE_UP, _ -> controller.moveUp());
     }
 
-    /** Binds one more key action on this table, for the commands of its own tab. */
+    /**
+     * Binds one more key action on this table, for the commands of its own tab.
+     */
     public TableView<T> on(String action, Runnable run) {
         actions.on(action, _ -> run.run());
         return this;
@@ -77,7 +80,7 @@ public class TableView<T> {
     }
 
     public StackElement element() {
-        return Toolkit.stack(controller.element(this::body))
+        return Toolkit.stack(content())
                 .id(controller.title())
                 .focusable()
                 .onAction(actions);
@@ -100,6 +103,15 @@ public class TableView<T> {
                 .title(" " + controller.title() + " ");
     }
 
+    private Element content() {
+        return switch (controller.content()) {
+            case TableController.Content.Loading<T> _ -> loading();
+            case TableController.Content.Failure<T>(var message) -> failure(message);
+            case TableController.Content.Rows<T>(var items, var actionFailure) ->
+                    dockActionFailure(body(items), actionFailure.orElse(""));
+        };
+    }
+
     private Row headers() {
         return Row.from(columns.stream().map(Column::headerCell).toArray(Cell[]::new));
     }
@@ -110,5 +122,32 @@ public class TableView<T> {
 
     private Constraint[] widths() {
         return columns.stream().map(Column::width).toArray(Constraint[]::new);
+    }
+
+    private Element loading() {
+        return Toolkit.panel(title(), Toolkit.text("Loading...").dim()).rounded();
+    }
+
+    private Element failure(String message) {
+        return Toolkit.panel(title(), Toolkit.column(
+                Toolkit.text("Cannot reach Apple Container.").red(),
+                Toolkit.text(oneLine(message)).red().dim(),
+                Toolkit.text("Check it is running, then press r to reload.").dim())).rounded();
+    }
+
+    /**
+     * Display error / failed action on the last row.
+     */
+    private Element dockActionFailure(Element table, String message) {
+        if (message == null || message.isEmpty()) return table;
+
+        return Toolkit.dock()
+                .center(table)
+                .bottom(Toolkit.text(oneLine(message)).red(), Toolkit.length(1));
+    }
+
+    private static String oneLine(String message) {
+        var flat = message.replace('\n', ' ').replace('\r', ' ').strip();
+        return flat.length() <= MAX_FAILURE_WIDTH ? flat : flat.substring(0, MAX_FAILURE_WIDTH - 1) + "…";
     }
 }
