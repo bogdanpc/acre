@@ -6,9 +6,7 @@ import dev.images.ImagesView;
 import dev.tamboui.tui.event.KeyCode;
 import dev.testing.TestScreen;
 import dev.testing.Views;
-import dev.ui.MainView;
-import dev.ui.Tab;
-import dev.ui.TableController;
+import dev.ui.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -16,10 +14,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PaletteTest {
 
@@ -27,7 +22,8 @@ class PaletteTest {
 
     @Test
     void opensWithColonAndWithCtrlP() {
-        terminal.show(Views.app(() -> {}));
+        terminal.show(Views.app(() -> {
+        }));
 
         terminal.press(':').assertShows("Run a command");
         terminal.press(KeyCode.ESCAPE);
@@ -91,8 +87,11 @@ class PaletteTest {
     @Test
     void leavesTheRowPlainWhenTheCommandHasNoKey() {
         var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
-        var tab = new Tab("Images", images::element, () -> List.of(new Command("no key here", () -> {})));
-        terminal.show(new MainView(() -> {}, List.of(tab)));
+        var tab = new Tab("Images", images::element, () -> List.of(new Command("no key here", () -> {
+        })));
+        var controller = new MainController(List.of(tab), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
+        });
+        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
 
         var screen = terminal.press(':');
 
@@ -104,8 +103,11 @@ class PaletteTest {
         var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
         var tab = new Tab("Images", images::element, () -> List.of(
                 new Command("a very long command label that will not fit inside the palette row",
-                        "enter", () -> {})));
-        terminal.show(new MainView(() -> {}, List.of(tab)));
+                        "enter", () -> {
+                })));
+        var controller = new MainController(List.of(tab), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
+        });
+        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
 
         var screen = terminal.press(':');
 
@@ -149,7 +151,9 @@ class PaletteTest {
             loads.incrementAndGet();
             return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8")));
         }, Runnable::run));
-        terminal.show(new MainView(() -> {}, List.of(Tab.of(images))));
+        var controller = new MainController(List.of(Tab.of(images)), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
+        });
+        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
 
         terminal.press(':');
         terminal.press('r');
@@ -173,7 +177,8 @@ class PaletteTest {
     }
 
     private static List<Command> commands(String... labels) {
-        return Arrays.stream(labels).map(label -> new Command(label, () -> {})).toList();
+        return Arrays.stream(labels).map(label -> new Command(label, () -> {
+        })).toList();
     }
 
     private static List<String> labels(List<Command> commands) {

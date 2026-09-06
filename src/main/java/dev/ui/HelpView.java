@@ -25,20 +25,6 @@ public final class HelpView {
 
     private static final int WIDTH = longestLine(BODY) + PADDING * 2 + 2;
 
-    private boolean visible;
-
-    public boolean visible() {
-        return visible;
-    }
-
-    public void toggle() {
-        visible = !visible;
-    }
-
-    public void hide() {
-        visible = false;
-    }
-
     public Element element() {
         return dialog(" Keys ", markupText(BODY))
                 .rounded()

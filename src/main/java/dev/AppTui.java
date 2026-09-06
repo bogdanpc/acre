@@ -9,12 +9,7 @@ import dev.images.ImagesView;
 import dev.tamboui.toolkit.app.ToolkitApp;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.tui.TuiConfig;
-import dev.ui.AppleContainerStatus;
-import dev.ui.KeyBindings;
-import dev.ui.Loader;
-import dev.ui.MainView;
-import dev.ui.Tab;
-import dev.ui.TableController;
+import dev.ui.*;
 import dev.volumes.VolumesTab;
 
 import java.time.Duration;
@@ -64,7 +59,8 @@ public class AppTui extends ToolkitApp {
                 AppleContainerStatus.UNKNOWN)
                 .refreshEvery(STATUS_REFRESH);
 
-        this.view = new MainView(this::quit, status, tabs);
+        var mainController = new MainController(tabs, status, this::quit);
+        this.view = new MainView(mainController, new MainKeyHandler(mainController));
     }
 
     @Override
