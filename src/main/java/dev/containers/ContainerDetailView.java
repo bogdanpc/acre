@@ -9,14 +9,11 @@ import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.widgets.table.Cell;
 import dev.tamboui.widgets.table.Row;
+import dev.ui.Format;
 
-import java.time.Instant;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import static dev.tamboui.toolkit.Toolkit.*;
 
@@ -26,7 +23,6 @@ public final class ContainerDetailView {
     private static final Style LABEL = Style.EMPTY.fg(Color.rgb(0x56, 0x5F, 0x89));
 
     private static final int LABEL_WIDTH = 15;
-    private static final String MISSING = "-";
 
     private static final Style KEY = Style.EMPTY.fg(ACCENT).bold();
     private static final Style HINT = Style.EMPTY.dim();
@@ -39,8 +35,6 @@ public final class ContainerDetailView {
             new String[] {"r", "reload"},
             new String[] {"↑ ↓", "other container"},
             new String[] {"esc", "back"});
-
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy 'at' HH:mm", Locale.ENGLISH);
 
     private ContainerDetailView() {
     }
@@ -57,7 +51,7 @@ public final class ContainerDetailView {
         var details = container.details();
         field(rows, "Name", container.id());
         rows.add(fieldRow("Status", Span.styled(
-                value(container.state()), ContainersView.stateStyle(container))));
+                Format.valueOrPlaceholder(container.state()), ContainersView.stateStyle(container))));
         field(rows, "Image", container.image());
         field(rows, "Platform", details.platform());
         field(rows, "CPUs", String.valueOf(container.cpus()));
@@ -70,8 +64,8 @@ public final class ContainerDetailView {
         field(rows, "Nested Virt", enabled(details.nestedVirtualization()));
         field(rows, "Rosetta", enabled(details.rosetta()));
         field(rows, "Runtime", details.runtime());
-        field(rows, "Created", date(details.created(), ZoneId.systemDefault()));
-        field(rows, "Started", date(details.started(), ZoneId.systemDefault()));
+        field(rows, "Created", Format.date(details.created(), ZoneId.systemDefault()));
+        field(rows, "Started", Format.date(details.started(), ZoneId.systemDefault()));
         return table()
                 .rows(rows)
                 .widths(length(LABEL_WIDTH), fill())
@@ -80,7 +74,7 @@ public final class ContainerDetailView {
     }
 
     private static void field(List<Row> rows, String label, String value) {
-        rows.add(fieldRow(label, Span.raw(value(value))));
+        rows.add(fieldRow(label, Span.raw(Format.valueOrPlaceholder(value))));
     }
 
     private static void fields(List<Row> rows, String label, List<String> values) {
@@ -97,10 +91,6 @@ public final class ContainerDetailView {
         return Row.from(Cell.from(label).style(LABEL), Cell.from(value));
     }
 
-    private static String value(String value) {
-        return value == null || value.isBlank() ? MISSING : value;
-    }
-
     private static String enabled(boolean flag) {
         return flag ? "Enabled" : "Disabled";
     }
@@ -115,16 +105,5 @@ public final class ContainerDetailView {
             spans.add(Span.styled(" " + entry[1], HINT));
         }
         return richText(Text.from(Line.from(spans))).length(1);
-    }
-
-    static String date(String iso, ZoneId zone) {
-        if (iso == null || iso.isBlank()) {
-            return "";
-        }
-        try {
-            return DATE.format(Instant.parse(iso).atZone(zone));
-        } catch (DateTimeParseException _) {
-            return iso;
-        }
     }
 }

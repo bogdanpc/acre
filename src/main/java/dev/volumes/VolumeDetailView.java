@@ -6,6 +6,7 @@ import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.widgets.table.Cell;
 import dev.tamboui.widgets.table.Row;
+import dev.ui.Format;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,6 @@ public final class VolumeDetailView {
     private static final Style HEADING = Style.EMPTY.fg(Color.WHITE).bold();
 
     private static final int LABEL_WIDTH = 15;
-    private static final String MISSING = "-";
     private static final String NONE = "No container mounts this volume.";
     private static final String HINTS = "r reload · ↑ ↓ other volume · esc back";
 
@@ -48,7 +48,7 @@ public final class VolumeDetailView {
         field(rows, "Source", volume.source());
         field(rows, "Destination", destination(uses));
         field(rows, "Type", volume.driver());
-        field(rows, "Size", VolumesView.size(volume.size()));
+        field(rows, "Size", Format.bytes(volume.size()));
         field(rows, "Containers", String.valueOf(uses.size()));
         return fields(rows);
     }
@@ -79,9 +79,9 @@ public final class VolumeDetailView {
     private static Row row(VolumeUse use) {
         return Row.from(
                 Cell.from(use.container()).style(Style.EMPTY.fg(Color.CYAN)),
-                Cell.from(value(use.address())),
-                Cell.from(value(use.hostname())),
-                Cell.from(value(use.destination())));
+                Cell.from(Format.valueOrPlaceholder(use.address())),
+                Cell.from(Format.valueOrPlaceholder(use.hostname())),
+                Cell.from(Format.valueOrPlaceholder(use.destination())));
     }
 
     private static Cell header(String title) {
@@ -101,11 +101,7 @@ public final class VolumeDetailView {
     }
 
     private static void field(List<Row> rows, String label, String value) {
-        rows.add(Row.from(Cell.from(label).style(LABEL), Cell.from(value(value))));
-    }
-
-    private static String value(String value) {
-        return value == null || value.isBlank() ? MISSING : value;
+        rows.add(Row.from(Cell.from(label).style(LABEL), Cell.from(Format.valueOrPlaceholder(value))));
     }
 
     private static Element hint() {
