@@ -5,7 +5,7 @@ A terminal UI for Apple's `container` CLI on macOS. Watch your containers, read 
 ## What it does
 
 - **Containers.** List, inspect, start, stop, restart, kill, delete, prune, logs
-- **Images.** List
+- **Images.** List, inspect
 - **Volumes.** List, inspect
 - **Command palette.** Fuzzy search over every command.
 

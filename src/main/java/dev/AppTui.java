@@ -4,8 +4,7 @@ import dev.applecontainer.AppleContainerCli;
 import dev.applecontainer.CliResult;
 import dev.applecontainer.SystemCommands;
 import dev.containers.ContainersTab;
-import dev.images.ImageCommands;
-import dev.images.ImagesView;
+import dev.images.ImagesTab;
 import dev.tamboui.toolkit.app.ToolkitApp;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.tui.TuiConfig;
@@ -45,12 +44,12 @@ public class AppTui extends ToolkitApp {
 
         var containers = ContainersTab.of(cli);
 
+        var images = ImagesTab.of(cli);
         var volumes = VolumesTab.of(cli);
-        var images = new TableController<>("Images", new ImageCommands(cli)::list);
 
         var tabs = List.of(
                 containers.tab(),
-                Tab.of(ImagesView.of(images)),
+                images.tab(),
                 volumes.tab());
 
         var system = new SystemCommands(cli);

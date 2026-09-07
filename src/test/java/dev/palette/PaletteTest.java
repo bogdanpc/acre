@@ -149,7 +149,7 @@ class PaletteTest {
         var loads = new AtomicInteger();
         var images = ImagesView.of(new TableController<>("Images", () -> {
             loads.incrementAndGet();
-            return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8")));
+            return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8", "", "", 0, List.of())));
         }, Runnable::run));
         var controller = new MainController(List.of(Tab.of(images)), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
         });
