@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 /// Runs CLI actions on virtual threads
 public final class CliRunner {
 
-    public static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
+    private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
             Thread.ofVirtual().name("acre-cli-", 0).factory());
 
     private final Executor executor;
@@ -24,9 +24,13 @@ public final class CliRunner {
         this.executor = executor;
     }
 
+    void execute(Runnable task) {
+        executor.execute(task);
+    }
+
     /// Runs `action`, then hands `onDone` the failure message, if any
     public void run(Supplier<? extends CliResult<?>> action, Consumer<Optional<String>> onDone) {
-        executor.execute(() -> {
+        execute(() -> {
             var failure = Optional.<String>empty();
             try {
                 if (action.get() instanceof CliResult.Failure<?>(var message)) {

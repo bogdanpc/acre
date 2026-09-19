@@ -6,7 +6,6 @@ import dev.applecontainer.SystemCommands;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 public final class SystemController {
 
@@ -23,15 +22,15 @@ public final class SystemController {
     }
 
     public static SystemController of(AppleContainerCli cli) {
-        return of(new SystemCommands(cli), CliRunner.DEFAULT_EXECUTOR);
+        return of(new SystemCommands(cli), new CliRunner());
     }
 
-    public static SystemController of(SystemCommands system, Executor executor) {
+    public static SystemController of(SystemCommands system, CliRunner runner) {
         var status = new Loader<>(
                 () -> CliResult.success(AppleContainerStatus.of(system.isRunning())), AppleContainerStatus.UNKNOWN,
-                executor)
+                runner)
                 .refreshEvery(STATUS_REFRESH);
-        return new SystemController(system, status, new CliRunner(executor));
+        return new SystemController(system, status, runner);
     }
 
     public List<Action> actions() {

@@ -8,7 +8,6 @@ import dev.ui.Loader;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 public final class LogsController {
@@ -18,19 +17,19 @@ public final class LogsController {
     static final Duration REFRESH = Duration.ofSeconds(2);
 
     private final ContainerCommands commands;
-    private final Executor executor;
+    private final CliRunner runner;
     private final TextInputState filter = new TextInputState();
 
     private String container;
     private Loader<List<String>> lines;
 
     public LogsController(ContainerCommands commands) {
-        this(commands, CliRunner.DEFAULT_EXECUTOR);
+        this(commands, new CliRunner());
     }
 
-    public LogsController(ContainerCommands commands, Executor executor) {
+    public LogsController(ContainerCommands commands, CliRunner runner) {
         this.commands = commands;
-        this.executor = executor;
+        this.runner = runner;
     }
 
     public String container() {
@@ -80,6 +79,6 @@ public final class LogsController {
 
     private Loader<List<String>> loader(String id) {
         Supplier<CliResult<List<String>>> source = () -> commands.logs(id, TAIL);
-        return new Loader<>(source, List.of(), executor).refreshEvery(REFRESH);
+        return new Loader<>(source, List.of(), runner).refreshEvery(REFRESH);
     }
 }

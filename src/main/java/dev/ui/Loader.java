@@ -3,7 +3,6 @@ package dev.ui;
 import dev.applecontainer.CliResult;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -12,7 +11,7 @@ public final class Loader<T> {
 
     private final Supplier<CliResult<T>> source;
     private final T initial;
-    private final Executor executor;
+    private final CliRunner runner;
 
     private final AtomicReference<T> value;
     private final AtomicReference<String> failure = new AtomicReference<>();
@@ -23,18 +22,18 @@ public final class Loader<T> {
     private volatile Duration refreshAfter;
 
     public Loader(Supplier<CliResult<T>> source, T initial) {
-        this(source, initial, CliRunner.DEFAULT_EXECUTOR);
+        this(source, initial, new CliRunner());
     }
 
-    public Loader(Supplier<CliResult<T>> source, T initial, Executor executor) {
+    public Loader(Supplier<CliResult<T>> source, T initial, CliRunner runner) {
         this.source = source;
         this.initial = initial;
-        this.executor = executor;
+        this.runner = runner;
         this.value = new AtomicReference<>(initial);
     }
 
     public static <T> Loader<T> of(T value) {
-        return new Loader<>(() -> CliResult.success(value), value, Runnable::run);
+        return new Loader<>(() -> CliResult.success(value), value, new CliRunner(Runnable::run));
     }
 
 
@@ -62,7 +61,7 @@ public final class Loader<T> {
         if (!loading.compareAndSet(false, true)) {
             return;
         }
-        executor.execute(() -> {
+        runner.execute(() -> {
             try {
                 switch (source.get()) {
                     case CliResult.Success<T>(var loaded) -> {

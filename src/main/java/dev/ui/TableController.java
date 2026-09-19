@@ -5,7 +5,6 @@ import dev.tamboui.widgets.table.TableState;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -32,13 +31,13 @@ public final class TableController<T> {
     }
 
     public TableController(String title, Supplier<CliResult<List<T>>> source) {
-        this(title, source, CliRunner.DEFAULT_EXECUTOR);
+        this(title, source, new CliRunner());
     }
 
-    public TableController(String title, Supplier<CliResult<List<T>>> source, Executor executor) {
+    public TableController(String title, Supplier<CliResult<List<T>>> source, CliRunner runner) {
         this.title = title;
-        this.rows = new Loader<>(source, List.of(), executor);
-        this.runner = new CliRunner(executor);
+        this.rows = new Loader<>(source, List.of(), runner);
+        this.runner = runner;
     }
 
     public String title() {

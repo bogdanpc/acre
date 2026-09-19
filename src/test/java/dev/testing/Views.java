@@ -38,7 +38,7 @@ public final class Views {
     }
 
     private static MainView app(List<Tab> tabs, SystemCommands system, Runnable onQuit) {
-        return MainView.of(new MainController(tabs, SystemController.of(system, Runnable::run), onQuit));
+        return MainView.of(new MainController(tabs, SystemController.of(system, new CliRunner(Runnable::run)), onQuit));
     }
 
     private static SystemCommands noSystem() {
@@ -47,9 +47,9 @@ public final class Views {
 
     public static List<Tab> imagesAndVolumes() {
         var images = new TableController<ContainerImage>(
-                "Images", () -> CliResult.success(List.of()), Runnable::run);
+                "Images", () -> CliResult.success(List.of()), new CliRunner(Runnable::run));
         var volumes = new TableController<Volume>(
-                "Volumes", () -> CliResult.success(List.of()), Runnable::run);
+                "Volumes", () -> CliResult.success(List.of()), new CliRunner(Runnable::run));
         return List.of(Tab.of(ImagesView.of(images)), Tab.of(VolumesView.of(volumes)));
     }
 }

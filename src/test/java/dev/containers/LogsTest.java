@@ -5,6 +5,7 @@ import dev.tamboui.tui.event.KeyCode;
 import dev.applecontainer.CliResult;
 import dev.testing.MockContainerCli;
 import dev.testing.TestScreen;
+import dev.ui.CliRunner;
 import dev.ui.TableController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -101,8 +102,8 @@ class LogsTest {
         var table = new TableController<>("Containers", () -> {
             loads.incrementAndGet();
             return CliResult.success(List.of(WEB));
-        }, Runnable::run);
-        terminal.show(new ContainersTab(commands, table, new LogsController(commands, Runnable::run))::element);
+        }, new CliRunner(Runnable::run));
+        terminal.show(new ContainersTab(commands, table, new LogsController(commands, new CliRunner(Runnable::run)))::element);
         terminal.press('l');
         int before = loads.get();
 
@@ -139,7 +140,7 @@ class LogsTest {
 
     private ContainersTab tab(AppleContainerCli container) {
         var commands = new ContainerCommands(container);
-        var table = new TableController<>("Containers", () -> CliResult.success(List.of(WEB)), Runnable::run);
-        return new ContainersTab(commands, table, new LogsController(commands, Runnable::run));
+        var table = new TableController<>("Containers", () -> CliResult.success(List.of(WEB)), new CliRunner(Runnable::run));
+        return new ContainersTab(commands, table, new LogsController(commands, new CliRunner(Runnable::run)));
     }
 }

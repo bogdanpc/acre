@@ -7,7 +7,10 @@ import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.tui.event.KeyCode;
 import dev.testing.TestScreen;
 import dev.testing.Views;
-import dev.ui.*;
+import dev.ui.Action;
+import dev.ui.CliRunner;
+import dev.ui.Tab;
+import dev.ui.TableController;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -87,7 +90,7 @@ class PaletteTest {
 
     @Test
     void leavesTheRowPlainWhenTheCommandHasNoKey() {
-        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
+        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), new CliRunner(Runnable::run)));
         var tab = new Tab("Images", images::element, () -> List.of(Action.unbound("no key here", () -> {
         })));
         terminal.show(Views.app(List.of(tab)));
@@ -99,7 +102,7 @@ class PaletteTest {
 
     @Test
     void cutsALongLabelSoTheKeyStaysOnTheRow() {
-        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
+        var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), new CliRunner(Runnable::run)));
         var tab = new Tab("Images", images::element, () -> List.of(
                 new Action(Actions.SELECT, "a very long command label that will not fit inside the palette row",
                         () -> {
@@ -147,7 +150,7 @@ class PaletteTest {
         var images = ImagesView.of(new TableController<>("Images", () -> {
             loads.incrementAndGet();
             return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8", "", "", 0, List.of())));
-        }, Runnable::run));
+        }, new CliRunner(Runnable::run)));
         terminal.show(Views.app(List.of(Tab.of(images))));
 
         terminal.press(':');

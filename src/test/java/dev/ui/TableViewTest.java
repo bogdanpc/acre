@@ -48,6 +48,6 @@ class TableViewTest {
     }
 
     private static TableController<String> controller(Supplier<CliResult<List<String>>> source) {
-        return new TableController<>("Containers", source, Runnable::run);
+        return new TableController<>("Containers", source, new CliRunner(Runnable::run));
     }
 }

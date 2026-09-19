@@ -3,6 +3,7 @@ package dev.volumes;
 import dev.containers.Container;
 import dev.testing.TestScreen;
 import dev.applecontainer.CliResult;
+import dev.ui.CliRunner;
 import dev.ui.Loader;
 import dev.ui.TableController;
 import dev.tamboui.tui.event.KeyCode;
@@ -62,7 +63,7 @@ class VolumesTabTest {
 
     private static VolumesTab tab(List<Volume> volumes, List<Container> containers) {
         return new VolumesTab(
-                new TableController<>("Volumes", () -> CliResult.success(volumes), Runnable::run),
-                new Loader<>(() -> CliResult.success(containers), List.of(), Runnable::run));
+                new TableController<>("Volumes", () -> CliResult.success(volumes), new CliRunner(Runnable::run)),
+                new Loader<>(() -> CliResult.success(containers), List.of(), new CliRunner(Runnable::run)));
     }
 }
