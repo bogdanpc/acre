@@ -1,14 +1,15 @@
 package dev;
 
 import dev.applecontainer.AppleContainerCli;
-import dev.applecontainer.CliResult;
-import dev.applecontainer.SystemCommands;
 import dev.containers.ContainersTab;
 import dev.images.ImagesTab;
 import dev.tamboui.toolkit.app.ToolkitApp;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.tui.TuiConfig;
-import dev.ui.*;
+import dev.ui.KeyBindings;
+import dev.ui.MainController;
+import dev.ui.MainView;
+import dev.ui.SystemController;
 import dev.volumes.VolumesTab;
 
 import java.time.Duration;
@@ -17,7 +18,6 @@ import java.util.List;
 
 public class AppTui extends ToolkitApp {
 
-    private static final Duration STATUS_REFRESH = Duration.ofSeconds(5);
     private static final String WINDOW_TITLE = "acre";
 
     private final MainView view;
@@ -43,24 +43,9 @@ public class AppTui extends ToolkitApp {
     public AppTui(TuiConfig config, AppleContainerCli cli) {
         this.config = config;
 
-        var containers = ContainersTab.of(cli);
+        var tabs = List.of(ContainersTab.of(cli).tab(), ImagesTab.of(cli).tab(), VolumesTab.of(cli).tab());
 
-        var images = ImagesTab.of(cli);
-        var volumes = VolumesTab.of(cli);
-
-        var tabs = List.of(
-                containers.tab(),
-                images.tab(),
-                volumes.tab());
-
-        var system = new SystemCommands(cli);
-        var status = new Loader<>(
-                () -> CliResult.success(AppleContainerStatus.of(system.isRunning())),
-                AppleContainerStatus.UNKNOWN)
-                .refreshEvery(STATUS_REFRESH);
-
-        var mainController = new MainController(tabs, status, this::quit);
-        this.view = new MainView(mainController, new MainKeyHandler(mainController));
+        this.view = MainView.of(new MainController(tabs, SystemController.of(cli), this::quit));
     }
 
     @Override

@@ -5,6 +5,9 @@ import static dev.tamboui.toolkit.Toolkit.markupText;
 
 import dev.tamboui.style.Color;
 import dev.tamboui.toolkit.element.Element;
+import dev.tamboui.tui.bindings.Actions;
+
+import java.util.List;
 
 /**
  * Help / About view
@@ -21,34 +24,29 @@ public final class HelpView {
 
     private static final int PADDING = 2;
 
-    private static final String BODY = body();
+    private static final List<Action> MOVES = List.of(
+            new Action(Actions.MOVE_UP, "up", () -> {}),
+            new Action(Actions.MOVE_DOWN, "down", () -> {}),
+            new Action(Actions.MOVE_RIGHT, "next tab", () -> {}),
+            new Action(Actions.MOVE_LEFT, "previous tab", () -> {}),
+            new Action(KeyBindings.OPEN_PALETTE, "this tab's commands and keys", () -> {}));
 
-    private static final int WIDTH = longestLine(BODY) + PADDING * 2 + 2;
-
-    public Element element() {
-        return dialog(" Keys ", markupText(BODY))
+    public Element element(List<Action> app) {
+        var body = body(app);
+        return dialog(" Keys ", markupText(body))
                 .rounded()
                 .borderColor(ACCENT)
                 .padding(PADDING)
-                .width(WIDTH);
+                .width(longestLine(body) + PADDING * 2 + 2);
     }
 
-    private static String body() {
+    private static String body(List<Action> app) {
         StringBuilder out = new StringBuilder();
 
         section(out, "move");
-        entry(out, "j / k / ↑ ↓", "up and down");
-        entry(out, "g / G", "first / last row");
-        entry(out, "1 2 3", "containers / images / volumes");
-        entry(out, "tab", "next tab");
+        entries(out, MOVES);
         section(out, "app");
-
-        entry(out, "enter", "container details");
-        entry(out, "l", "container logs");
-        entry(out, "r", "reload");
-        entry(out, "^K / :", "command palette");
-        entry(out, "?", "this help");
-        entry(out, "q", "quit");
+        entries(out, app);
 
         section(out, "about");
         line(out, AboutText.NAME + " " + AboutText.version() + " — " + AboutText.TITLE);
@@ -62,6 +60,12 @@ public final class HelpView {
 
     private static void section(StringBuilder out, String title) {
         out.append('\n').append(' ').append(SECTION_OPEN).append(title).append("[/]\n");
+    }
+
+    private static void entries(StringBuilder out, List<Action> actions) {
+        actions.stream()
+                .filter(action -> !action.keys().isEmpty())
+                .forEach(action -> entry(out, action.keys(), action.label()));
     }
 
     private static void entry(StringBuilder out, String key, String action) {

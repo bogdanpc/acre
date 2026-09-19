@@ -3,9 +3,8 @@ package dev.ui;
 import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.tui.bindings.BindingSets;
 import dev.tamboui.tui.bindings.Bindings;
+import dev.tamboui.tui.bindings.InputTrigger;
 import dev.tamboui.tui.bindings.KeyTrigger;
-
-import java.util.Map;
 
 public final class KeyBindings {
 
@@ -21,19 +20,6 @@ public final class KeyBindings {
     public static final String PRUNE = "pruneContainers";
     public static final String LOGS = "showLogs";
 
-    private static final Map<String, String> KEYS = Map.ofEntries(
-            Map.entry(RELOAD, "r"),
-            Map.entry(TOGGLE_HELP, "?"),
-            Map.entry(OPEN_PALETTE, ":"),
-            Map.entry(START, "s"),
-            Map.entry(STOP, "x"),
-            Map.entry(RESTART, "t"),
-            Map.entry(PRUNE, "P"),
-            Map.entry(LOGS, "l"),
-            Map.entry(Actions.QUIT, "q"),
-            Map.entry(Actions.SELECT, "enter"),
-            Map.entry(Actions.CANCEL, "esc"));
-
     private static final Bindings BINDINGS = build();
 
     private KeyBindings() {
@@ -43,8 +29,16 @@ public final class KeyBindings {
         return BINDINGS;
     }
 
-    public static String shortcutKey(String action) {
-        return KEYS.getOrDefault(action, "");
+    public static String key(String action) {
+        return BINDINGS.triggersFor(action).stream()
+                .findFirst()
+                .map(InputTrigger::describe)
+                .orElse("");
+    }
+
+    /// Key bound to `action`, e.g. "r, R". Empty when none.
+    public static String keys(String action) {
+        return BINDINGS.describeBindings(action);
     }
 
     public static String selectTab(int number) {

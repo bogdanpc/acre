@@ -1,22 +1,26 @@
 package dev.ui;
 
 import dev.palette.PaletteController;
+import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.widgets.tabs.TabsState;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class MainController {
     private final List<Tab> tabs;
     private final Runnable quit;
     private final TabsState state;
-    private final Loader<AppleContainerStatus> status;
+    private final SystemController system;
     private final PaletteController palette = new PaletteController();
     private final HelpController helpController = new HelpController();
 
-    public MainController(List<Tab> tabs, Loader<AppleContainerStatus> status, Runnable onQuit) {
+    public MainController(List<Tab> tabs, SystemController system, Runnable onQuit) {
         this.tabs = List.copyOf(tabs);
         this.quit = onQuit;
-        this.status = status;
+        this.system = system;
         this.state = new TabsState(0);
     }
 
@@ -24,8 +28,22 @@ public class MainController {
         return tabs;
     }
 
-    Loader<AppleContainerStatus> status() {
-        return status;
+    /// What the user can do from anywhere, whichever tab is shown.
+    public List<Action> actions() {
+        var actions = new ArrayList<>(system.actions());
+        IntStream.range(0, Math.min(tabs.size(), KeyBindings.MAX_TABS))
+                .mapToObj(index -> new Action(KeyBindings.selectTab(index + 1),
+                        "open " + tabs.get(index).title().toLowerCase(), () -> selectTab(index)))
+                .forEach(actions::add);
+        actions.add(new Action(KeyBindings.TOGGLE_HELP, "show the keys", helpController::toggle));
+        actions.add(new Action(Actions.QUIT, "quit", this::quit));
+        return actions;
+    }
+
+    public void openPalette() {
+        palette.open(Stream.concat(selectedTab().actions().get().stream(), actions().stream())
+                .map(Action::command)
+                .toList());
     }
 
     public PaletteController palette() {
@@ -65,5 +83,9 @@ public class MainController {
 
     public void prevTab() {
         state.selectPrevious(tabs.size());
+    }
+
+    AppleContainerStatus status() {
+        return system.status().value();
     }
 }

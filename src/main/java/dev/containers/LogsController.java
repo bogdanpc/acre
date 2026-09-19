@@ -2,19 +2,16 @@ package dev.containers;
 
 import dev.applecontainer.CliResult;
 import dev.tamboui.widgets.input.TextInputState;
+import dev.ui.CliRunner;
 import dev.ui.Loader;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public final class LogsController {
-
-    private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
-            Thread.ofVirtual().name("acre-logs-", 0).factory());
 
     static final int TAIL = 1000;
 
@@ -28,7 +25,7 @@ public final class LogsController {
     private Loader<List<String>> lines;
 
     public LogsController(ContainerCommands commands) {
-        this(commands, DEFAULT_EXECUTOR);
+        this(commands, CliRunner.DEFAULT_EXECUTOR);
     }
 
     public LogsController(ContainerCommands commands, Executor executor) {

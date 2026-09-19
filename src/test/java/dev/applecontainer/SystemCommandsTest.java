@@ -4,6 +4,8 @@ import dev.testing.MockContainerCli;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static dev.testing.CliResults.value;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,6 +27,20 @@ class SystemCommandsTest {
     @Test
     void isNotRunningWhenTheBinaryIsMissing() {
         assertFalse(new SystemCommands(cli.missing()).isRunning());
+    }
+
+    @Test
+    void startsWithoutWaitingForAKernelPrompt() {
+        assertEquals("system start --disable-kernel-install", value(echoingCommands().start()).strip());
+    }
+
+    @Test
+    void stops() {
+        assertEquals("system stop", value(echoingCommands().stop()).strip());
+    }
+
+    private SystemCommands echoingCommands() {
+        return new SystemCommands(cli.running("#!/bin/sh\necho \"$@\"\n"));
     }
 
     private SystemCommands commandsExiting(int exitCode) {

@@ -15,4 +15,12 @@ public class SystemCommands {
     public boolean isRunning() {
         return cli.run("system", "status") instanceof CliResult.Success;
     }
+
+    public CliResult<String> start() {
+        return cli.run("system", "start", "--disable-kernel-install");
+    }
+
+    public CliResult<String> stop() {
+        return cli.run("system", "stop");
+    }
 }

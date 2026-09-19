@@ -4,7 +4,6 @@ import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.toolkit.Toolkit;
 import dev.ui.Align;
-import dev.ui.KeyBindings;
 import dev.ui.TableController;
 import dev.ui.TableView;
 
@@ -15,16 +14,6 @@ public final class ContainersView extends TableView<Container> {
 
     private ContainersView(TableController<Container> controller) {
         super(controller, columns());
-    }
-
-    /** The tab with its one-key shortcuts: s start, x stop, t restart, P prune. */
-    public static ContainersView of(TableController<Container> controller, ContainersController actions) {
-        var view = of(controller);
-        view.on(KeyBindings.START, actions::start);
-        view.on(KeyBindings.STOP, actions::stop);
-        view.on(KeyBindings.RESTART, actions::restart);
-        view.on(KeyBindings.PRUNE, actions::prune);
-        return view;
     }
 
     public static ContainersView of(TableController<Container> controller) {

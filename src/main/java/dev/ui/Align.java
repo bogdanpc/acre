@@ -6,6 +6,6 @@ public enum Align {
     RIGHT;
 
     String pad(String text, int width) {
-        return this == RIGHT ? ("%" + width + "s").formatted(text) : text;
+        return this == RIGHT ? width + "s" : text;
     }
 }

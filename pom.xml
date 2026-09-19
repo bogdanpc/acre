@@ -5,7 +5,7 @@
 
     <groupId>dev</groupId>
     <artifactId>acre</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <name>acre</name>
     <description>Apple Container Resource Explorer - Terminal UI for Apple's container CLI on macOS</description>
 

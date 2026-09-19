@@ -4,15 +4,11 @@ import dev.applecontainer.CliResult;
 
 import java.time.Duration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public final class Loader<T> {
-
-    private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
-            Thread.ofVirtual().name("acre-loader-", 0).factory());
 
     private final Supplier<CliResult<T>> source;
     private final T initial;
@@ -27,7 +23,7 @@ public final class Loader<T> {
     private volatile Duration refreshAfter;
 
     public Loader(Supplier<CliResult<T>> source, T initial) {
-        this(source, initial, DEFAULT_EXECUTOR);
+        this(source, initial, CliRunner.DEFAULT_EXECUTOR);
     }
 
     public Loader(Supplier<CliResult<T>> source, T initial, Executor executor) {

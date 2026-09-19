@@ -3,6 +3,7 @@ package dev.palette;
 import dev.applecontainer.CliResult;
 import dev.images.ContainerImage;
 import dev.images.ImagesView;
+import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.tui.event.KeyCode;
 import dev.testing.TestScreen;
 import dev.testing.Views;
@@ -87,11 +88,9 @@ class PaletteTest {
     @Test
     void leavesTheRowPlainWhenTheCommandHasNoKey() {
         var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
-        var tab = new Tab("Images", images::element, () -> List.of(new Command("no key here", () -> {
+        var tab = new Tab("Images", images::element, () -> List.of(Action.unbound("no key here", () -> {
         })));
-        var controller = new MainController(List.of(tab), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
-        });
-        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
+        terminal.show(Views.app(List.of(tab)));
 
         var screen = terminal.press(':');
 
@@ -102,16 +101,14 @@ class PaletteTest {
     void cutsALongLabelSoTheKeyStaysOnTheRow() {
         var images = ImagesView.of(new TableController<>("Images", () -> CliResult.success(List.of()), Runnable::run));
         var tab = new Tab("Images", images::element, () -> List.of(
-                new Command("a very long command label that will not fit inside the palette row",
-                        "enter", () -> {
+                new Action(Actions.SELECT, "a very long command label that will not fit inside the palette row",
+                        () -> {
                 })));
-        var controller = new MainController(List.of(tab), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
-        });
-        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
+        terminal.show(Views.app(List.of(tab)));
 
         var screen = terminal.press(':');
 
-        assertTrue(screen.line("a very long command").contains("[enter]"), screen.toString());
+        assertTrue(screen.line("a very long command").contains("[Enter]"), screen.toString());
     }
 
     @Test
@@ -151,9 +148,7 @@ class PaletteTest {
             loads.incrementAndGet();
             return CliResult.success(List.of(new ContainerImage("docker.io/library/redis:8", "", "", 0, List.of())));
         }, Runnable::run));
-        var controller = new MainController(List.of(Tab.of(images)), Loader.of(AppleContainerStatus.UNKNOWN), () -> {
-        });
-        terminal.show(new MainView(controller, new MainKeyHandler(controller)));
+        terminal.show(Views.app(List.of(Tab.of(images))));
 
         terminal.press(':');
         terminal.press('r');

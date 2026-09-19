@@ -6,7 +6,6 @@ import dev.tamboui.widgets.table.TableState;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -15,12 +14,9 @@ import java.util.function.Supplier;
  */
 public final class TableController<T> {
 
-    private static final Executor DEFAULT_EXECUTOR = Executors.newThreadPerTaskExecutor(
-            Thread.ofVirtual().name("acre-action-", 0).factory());
-
     private final String title;
     private final Loader<List<T>> rows;
-    private final Executor executor;
+    private final CliRunner runner;
     private final TableState state = new TableState();
     private final AtomicReference<Optional<String>> actionFailure = new AtomicReference<>(Optional.empty());
 
@@ -36,17 +32,13 @@ public final class TableController<T> {
     }
 
     public TableController(String title, Supplier<CliResult<List<T>>> source) {
-        this(title, new Loader<>(source, List.of()), DEFAULT_EXECUTOR);
+        this(title, source, CliRunner.DEFAULT_EXECUTOR);
     }
 
     public TableController(String title, Supplier<CliResult<List<T>>> source, Executor executor) {
-        this(title, new Loader<>(source, List.of(), executor), executor);
-    }
-
-    public TableController(String title, Loader<List<T>> rows, Executor executor) {
         this.title = title;
-        this.rows = rows;
-        this.executor = executor;
+        this.rows = new Loader<>(source, List.of(), executor);
+        this.runner = new CliRunner(executor);
     }
 
     public String title() {
@@ -68,16 +60,9 @@ public final class TableController<T> {
 
     public void execute(Supplier<CliResult<?>> action) {
         clearActionFailure();
-        executor.execute(() -> {
-            try {
-                if (action.get() instanceof CliResult.Failure<?>(var message)) {
-                    actionFailure.set(Optional.of(message));
-                }
-            } catch (RuntimeException e) {
-                actionFailure.set(Optional.of(String.valueOf(e)));
-            } finally {
-                rows.reload();
-            }
+        runner.run(action, failure -> {
+            failure.ifPresent(message -> actionFailure.set(Optional.of(message)));
+            rows.reload();
         });
     }
 

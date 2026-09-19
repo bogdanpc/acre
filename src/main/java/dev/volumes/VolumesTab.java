@@ -1,14 +1,11 @@
 package dev.volumes;
 
-import static dev.tamboui.toolkit.Toolkit.stack;
-
 import dev.applecontainer.AppleContainerCli;
 import dev.containers.Container;
 import dev.containers.ContainerCommands;
-import dev.palette.Command;
 import dev.tamboui.toolkit.element.StyledElement;
-import dev.tamboui.tui.bindings.ActionHandler;
 import dev.tamboui.tui.bindings.Actions;
+import dev.ui.Action;
 import dev.ui.KeyBindings;
 import dev.ui.Loader;
 import dev.ui.Tab;
@@ -26,7 +23,6 @@ public final class VolumesTab {
     private final TableController<Volume> table;
     private final TableView<Volume> tableView;
     private final Loader<List<Container>> containers;
-    private final ActionHandler detailActions;
 
     private boolean detail;
 
@@ -39,38 +35,31 @@ public final class VolumesTab {
         this.table = table;
         this.containers = containers;
         this.tableView = VolumesView.of(table);
-        this.tableView.on(Actions.SELECT, this::open);
-        this.detailActions = new ActionHandler(KeyBindings.get())
-                .on(Actions.CANCEL, _ -> close())
-                .on(Actions.MOVE_DOWN, _ -> table.moveDown())
-                .on(Actions.MOVE_UP, _ -> table.moveUp())
-                .on(KeyBindings.RELOAD, _ -> reload());
     }
 
     public Tab tab() {
-        return new Tab(TITLE, this::element, this::commands);
+        return new Tab(TITLE, this::element, this::actions);
     }
 
     public StyledElement<?> element() {
         var volume = detail ? table.selected() : Optional.<Volume>empty();
         if (volume.isEmpty()) {
             detail = false;
-            return tableView.element();
+            return tableView.element(actions());
         }
-        return stack(VolumeDetailView.page(volume.get(), VolumeUse.of(containers.value(), volume.get())))
-                .id(TITLE)
-                .focusable()
-                .onAction(detailActions);
+        return tableView.page(VolumeDetailView.page(volume.get(), VolumeUse.of(containers.value(), volume.get())),
+                actions());
     }
 
-    public List<Command> commands() {
+    public List<Action> actions() {
+        if (detail) {
+            return List.of(
+                    new Action(KeyBindings.RELOAD, "reload the volumes list", this::reload),
+                    new Action(Actions.CANCEL, "back to the volume list", this::close));
+        }
         return Stream.concat(
-                        tableView.commands().stream(),
-                        Stream.of(detail
-                                ? new Command("back to the volume list",
-                                        KeyBindings.shortcutKey(Actions.CANCEL), this::close)
-                                : new Command("show volume details",
-                                        KeyBindings.shortcutKey(Actions.SELECT), this::open)))
+                        tableView.actions().stream(),
+                        Stream.of(new Action(Actions.SELECT, "show volume details", this::open)))
                 .toList();
     }
 

@@ -1,6 +1,5 @@
 package dev.ui;
 
-import dev.palette.Command;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
@@ -8,7 +7,6 @@ import dev.tamboui.text.Span;
 import dev.tamboui.toolkit.Toolkit;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.elements.StackElement;
-import dev.tamboui.tui.bindings.ActionHandler;
 import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.widgets.table.Cell;
 import dev.tamboui.widgets.table.Row;
@@ -56,23 +54,10 @@ public class TableView<T> {
 
     private final TableController<T> controller;
     private final List<Column<T>> columns;
-    private final ActionHandler actions;
 
     public TableView(TableController<T> controller, List<Column<T>> columns) {
         this.controller = controller;
         this.columns = List.copyOf(columns);
-        this.actions = new ActionHandler(KeyBindings.get())
-                .on(KeyBindings.RELOAD, _ -> controller.reload())
-                .on(Actions.MOVE_DOWN, _ -> controller.moveDown())
-                .on(Actions.MOVE_UP, _ -> controller.moveUp());
-    }
-
-    /**
-     * Binds one more key action on this table, for the commands of its own tab.
-     */
-    public TableView<T> on(String action, Runnable run) {
-        actions.on(action, _ -> run.run());
-        return this;
     }
 
     public String title() {
@@ -80,15 +65,25 @@ public class TableView<T> {
     }
 
     public StackElement element() {
-        return Toolkit.stack(content())
-                .id(controller.title())
-                .focusable()
-                .onAction(actions);
+        return element(actions());
     }
 
-    public List<Command> commands() {
-        return List.of(new Command("reload the " + title().toLowerCase() + " list",
-                KeyBindings.shortcutKey(KeyBindings.RELOAD), controller::reload));
+    public StackElement element(List<Action> actions) {
+        return page(content(), actions);
+    }
+
+    public StackElement page(Element content, List<Action> actions) {
+        return Toolkit.stack(content)
+                .id(controller.title())
+                .focusable()
+                .onAction(Action.handler(actions)
+                        .on(Actions.MOVE_DOWN, _ -> controller.moveDown())
+                        .on(Actions.MOVE_UP, _ -> controller.moveUp()));
+    }
+
+    public List<Action> actions() {
+        return List.of(new Action(KeyBindings.RELOAD, "reload the " + title().toLowerCase() + " list",
+                controller::reload));
     }
 
     private Element body(List<T> rows) {

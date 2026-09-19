@@ -3,14 +3,13 @@ package dev.containers;
 import static dev.tamboui.toolkit.Toolkit.stack;
 
 import dev.applecontainer.AppleContainerCli;
-import dev.palette.Command;
 import dev.tamboui.toolkit.Toolkit;
 import dev.tamboui.toolkit.element.StyledElement;
 import dev.tamboui.toolkit.event.EventResult;
-import dev.tamboui.tui.bindings.ActionHandler;
 import dev.tamboui.tui.bindings.Actions;
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
+import dev.ui.Action;
 import dev.ui.KeyBindings;
 import dev.ui.Tab;
 import dev.ui.TableController;
@@ -28,9 +27,8 @@ public final class ContainersTab {
     }
 
     private final TableController<Container> table;
-    private final ContainersController actions;
+    private final ContainersController controller;
     private final ContainersView tableView;
-    private final ActionHandler detailActions;
     private final LogsController logs;
     private final LogsView logsView;
 
@@ -51,28 +49,19 @@ public final class ContainersTab {
         this.table = table;
         this.logs = logs;
         this.logsView = new LogsView(logs);
-        this.actions = new ContainersController(commands, table);
-        this.tableView = ContainersView.of(table, actions);
-        this.tableView.on(Actions.SELECT, this::open);
-        this.tableView.on(KeyBindings.LOGS, this::openLogs);
-        this.detailActions = new ActionHandler(KeyBindings.get())
-                .on(Actions.CANCEL, _ -> close())
-                .on(Actions.MOVE_DOWN, _ -> table.moveDown())
-                .on(Actions.MOVE_UP, _ -> table.moveUp())
-                .on(KeyBindings.RELOAD, _ -> table.reload())
-                .on(KeyBindings.LOGS, _ -> openLogs());
-        actions.shortcuts().forEach((action, run) -> this.detailActions.on(action, _ -> run.run()));
+        this.controller = new ContainersController(commands, table);
+        this.tableView = ContainersView.of(table);
     }
 
     public Tab tab() {
-        return new Tab(TITLE, this::element, this::commands);
+        return new Tab(TITLE, this::element, this::actions);
     }
 
     public StyledElement<?> element() {
         var container = page == Page.TABLE ? Optional.<Container>empty() : table.selected();
         if (container.isEmpty()) {
             close();
-            return tableView.element();
+            return tableView.element(actions());
         }
         if (page == Page.LOGS) {
             return stack(logsView.element())
@@ -80,29 +69,22 @@ public final class ContainersTab {
                     .focusable()
                     .onKeyEvent(this::onLogsKey);
         }
-        return stack(ContainerDetailView.page(container.get()))
-                .id(TITLE)
-                .focusable()
-                .onAction(detailActions);
+        return tableView.page(ContainerDetailView.page(container.get()), actions());
     }
 
-    public List<Command> commands() {
-        var commands = new ArrayList<Command>();
-        commands.addAll(tableView.commands());
-        commands.addAll(actions.commands());
-        switch (page) {
-            case TABLE -> commands.add(new Command("show container details",
-                    KeyBindings.shortcutKey(Actions.SELECT), this::open));
-            case DETAIL -> commands.add(new Command("back to the container list",
-                    KeyBindings.shortcutKey(Actions.CANCEL), this::close));
-            case LOGS -> commands.add(new Command("close the logs",
-                    KeyBindings.shortcutKey(Actions.CANCEL), this::closeLogs));
-        }
+    public List<Action> actions() {
+        var actions = new ArrayList<Action>();
+        actions.addAll(tableView.actions());
+        actions.addAll(controller.actions());
+        actions.add(switch (page) {
+            case TABLE -> new Action(Actions.SELECT, "show container details", this::open);
+            case DETAIL -> new Action(Actions.CANCEL, "back to the container list", this::close);
+            case LOGS -> new Action(Actions.CANCEL, "close the logs", this::closeLogs);
+        });
         if (page != Page.LOGS) {
-            commands.add(new Command("show container logs",
-                    KeyBindings.shortcutKey(KeyBindings.LOGS), this::openLogs));
+            actions.add(new Action(KeyBindings.LOGS, "show container logs", this::openLogs));
         }
-        return List.copyOf(commands);
+        return List.copyOf(actions);
     }
 
     private EventResult onLogsKey(KeyEvent event) {

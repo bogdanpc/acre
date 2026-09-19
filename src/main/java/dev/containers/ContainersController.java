@@ -1,12 +1,11 @@
 package dev.containers;
 
 import dev.applecontainer.CliResult;
-import dev.palette.Command;
+import dev.ui.Action;
 import dev.ui.KeyBindings;
 import dev.ui.TableController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public class ContainersController {
@@ -19,21 +18,13 @@ public class ContainersController {
         this.controller = controller;
     }
 
-    public Map<String, Runnable> shortcuts() {
-        return Map.of(
-                KeyBindings.START, this::start,
-                KeyBindings.STOP, this::stop,
-                KeyBindings.RESTART, this::restart);
-    }
-
-    public List<Command> commands() {
-
+    public List<Action> actions() {
         return List.of(
-                new Command("start container", KeyBindings.shortcutKey(KeyBindings.START), this::start),
-                new Command("stop container", KeyBindings.shortcutKey(KeyBindings.STOP), this::stop),
-                new Command("restart container", KeyBindings.shortcutKey(KeyBindings.RESTART), this::restart),
-                new Command("delete container", this::delete),
-                new Command("prune", KeyBindings.shortcutKey(KeyBindings.PRUNE), this::prune));
+                new Action(KeyBindings.START, "start container", this::start),
+                new Action(KeyBindings.STOP, "stop container", this::stop),
+                new Action(KeyBindings.RESTART, "restart container", this::restart),
+                Action.unbound("delete container", this::delete),
+                new Action(KeyBindings.PRUNE, "prune", this::prune));
     }
 
     public void start() {

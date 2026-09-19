@@ -20,7 +20,7 @@ public final class MainView implements Element {
 
     private final List<Tab> tabs;
 
-    private final HeaderView header;
+    private final HeaderView header = new HeaderView();
     private final HelpView helpView = new HelpView();
     private final FooterView footer = new FooterView();
     private final PaletteView paletteView;
@@ -32,8 +32,11 @@ public final class MainView implements Element {
         this.controller = controller;
         this.keyHandler = keyHandler;
         this.tabs = List.copyOf(controller.tabs());
-        this.header = new HeaderView(controller.status());
         this.paletteView = new PaletteView(controller.palette());
+    }
+
+    public static MainView of(MainController controller) {
+        return new MainView(controller, new MainKeyHandler(controller));
     }
 
     @Override
@@ -48,17 +51,17 @@ public final class MainView implements Element {
 
     private Element root() {
         var base = dock()
-                .top(header.element(tabBar()), length(1))
+                .top(header.element(tabBar(), controller.status()), length(1))
                 .center(content())
                 .bottom(footer.element(), length(1))
                 .id("root")
                 .onKeyEvent(keyHandler::handle);
-        
+
         if (controller.palette().visible()) {
             return stack(base, paletteView.element());
         }
         if (controller.help().isVisible()) {
-            return stack(base, helpView.element());
+            return stack(base, helpView.element(controller.actions()));
         }
         return base;
     }
