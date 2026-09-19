@@ -18,6 +18,7 @@ import java.util.List;
 public class AppTui extends ToolkitApp {
 
     private static final Duration STATUS_REFRESH = Duration.ofSeconds(5);
+    private static final String WINDOW_TITLE = "acre";
 
     private final MainView view;
     private final TuiConfig config;
@@ -60,6 +61,11 @@ public class AppTui extends ToolkitApp {
 
         var mainController = new MainController(tabs, status, this::quit);
         this.view = new MainView(mainController, new MainKeyHandler(mainController));
+    }
+
+    @Override
+    protected void onStart() {
+        setWindowTitle(WINDOW_TITLE);
     }
 
     @Override

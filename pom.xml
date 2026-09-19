@@ -45,7 +45,7 @@
             <dependency>
                 <groupId>dev.tamboui</groupId>
                 <artifactId>tamboui-bom</artifactId>
-                <version>0.4.0</version>
+                <version>0.5.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -118,6 +118,7 @@
                                         <exclude>META-INF/*.RSA</exclude>
                                         <exclude>module-info.class</exclude>
                                         <exclude>META-INF/versions/*/module-info.class</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
