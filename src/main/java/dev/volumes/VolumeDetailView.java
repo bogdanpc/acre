@@ -21,7 +21,7 @@ public final class VolumeDetailView {
 
     private static final int LABEL_WIDTH = 15;
     private static final String NONE = "No container mounts this volume.";
-    private static final String HINTS = "r reload · ↑ ↓ other volume · esc back";
+    private static final String HINTS = "r reload · d delete · ↑ ↓ other volume · esc back";
 
     private VolumeDetailView() {
     }

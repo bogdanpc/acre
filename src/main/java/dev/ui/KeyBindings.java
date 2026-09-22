@@ -19,6 +19,7 @@ public final class KeyBindings {
     public static final String RESTART = "restartContainer";
     public static final String PRUNE = "pruneContainers";
     public static final String LOGS = "showLogs";
+    public static final String DELETE = "delete";
 
     private static final Bindings BINDINGS = build();
 
@@ -58,7 +59,9 @@ public final class KeyBindings {
                 .bind(KeyTrigger.ch('s'), START)
                 .bind(KeyTrigger.ch('x'), STOP)
                 .bind(KeyTrigger.ch('t'), RESTART)
-                .bind(KeyTrigger.ch('P'), PRUNE);
+                .bind(KeyTrigger.ch('P'), PRUNE)
+                .bind(KeyTrigger.ch('d'), DELETE);
+
         for (int number = 1; number <= MAX_TABS; number++) {
             builder.bind(KeyTrigger.ch((char) ('0' + number)), selectTab(number));
         }

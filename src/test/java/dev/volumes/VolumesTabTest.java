@@ -1,6 +1,7 @@
 package dev.volumes;
 
 import dev.containers.Container;
+import dev.testing.MockContainerCli;
 import dev.testing.TestScreen;
 import dev.applecontainer.CliResult;
 import dev.ui.CliRunner;
@@ -8,10 +9,14 @@ import dev.ui.Loader;
 import dev.ui.TableController;
 import dev.tamboui.tui.event.KeyCode;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 
 class VolumesTabTest {
+
+    @RegisterExtension
+    final MockContainerCli cli = new MockContainerCli();
 
     private static final Volume PGDATA =
             new Volume("pgdata", "local", "ext4", 549755813888L, "/Users/me/volumes/pgdata/volume.img");
@@ -61,9 +66,11 @@ class VolumesTabTest {
         terminal.press(KeyCode.ENTER).assertShows("No container mounts this volume.");
     }
 
-    private static VolumesTab tab(List<Volume> volumes, List<Container> containers) {
+    private VolumesTab tab(List<Volume> volumes, List<Container> containers) {
+        var table = new TableController<>("Volumes", () -> CliResult.success(volumes), new CliRunner(Runnable::run));
         return new VolumesTab(
-                new TableController<>("Volumes", () -> CliResult.success(volumes), new CliRunner(Runnable::run)),
-                new Loader<>(() -> CliResult.success(containers), List.of(), new CliRunner(Runnable::run)));
+                table,
+                new Loader<>(() -> CliResult.success(containers), List.of(), new CliRunner(Runnable::run)),
+                new VolumesController(new VolumeCommands(cli.missing()), table));
     }
 }

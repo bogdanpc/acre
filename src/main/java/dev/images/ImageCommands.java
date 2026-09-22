@@ -29,6 +29,14 @@ public class ImageCommands {
         return cli.runJson(ImageCommands::images, "image", "list");
     }
 
+    /**
+     * Delete a container image
+     * @param image Container id
+     */
+    public CliResult<String> delete(String image) {
+        return cli.run("image", "delete", image);
+    }
+
     private static List<ContainerImage> images(JrsValue listed) {
         return values(listed).map(ImageCommands::image).toList();
     }

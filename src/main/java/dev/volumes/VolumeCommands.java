@@ -30,6 +30,10 @@ public class VolumeCommands {
         return cli.runJson(VolumeCommands::volumes, "volume", "list");
     }
 
+    public CliResult<String> remove(String name) {
+        return cli.run("volume", "rm", name);
+    }
+
     private static List<Volume> volumes(JrsValue listed) {
         return values(listed).map(VolumeCommands::volume).toList();
     }

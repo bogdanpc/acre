@@ -28,7 +28,7 @@ public final class ImageDetailView {
     private static final int COLUMN_GUTTER = 2;
     private static final int COLUMN_CEILING = 48;
     private static final String NONE = "No container runs this image.";
-    private static final String HINTS = "r reload · ↑ ↓ scroll · esc back";
+    private static final String HINTS = "r reload · d delete · ↑ ↓ scroll · esc back";
 
     private ListElement<?> body;
     private ImageDetail rendered;
