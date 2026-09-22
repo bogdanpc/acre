@@ -1,7 +1,5 @@
 package dev.images;
 
-import static dev.tamboui.toolkit.Toolkit.stack;
-
 import dev.applecontainer.AppleContainerCli;
 import dev.containers.Container;
 import dev.containers.ContainerCommands;
@@ -45,20 +43,19 @@ public final class ImagesTab {
 
     public StyledElement<?> element() {
         return detail.detail()
-                .map(shown -> stack(detailView.element(shown))
-                        .id(TITLE)
-                        .focusable()
-                        .onAction(Action.handler(actions())))
+                .map(shown -> tableView.page(detailView.element(shown), actions()))
                 .orElseGet(() -> tableView.element(actions()));
     }
 
     public List<Action> actions() {
 
         if (detail.detail().isPresent()) {
-            return List.of(
+            var actions = new ArrayList<>(List.of(
                     new Action(KeyBindings.RELOAD, "reload the images list", detail::reload),
                     new Action(KeyBindings.DELETE, "delete image", this::deleteImage),
-                    new Action(Actions.CANCEL, "back to the image list", detail::close));
+                    new Action(Actions.CANCEL, "back to the image list", detail::close)));
+            actions.addAll(detailView.actions());
+            return actions;
         }
         var actions = new ArrayList<Action>();
         actions.addAll(controller.actions());

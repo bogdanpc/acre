@@ -7,8 +7,9 @@ import dev.tamboui.text.Span;
 import dev.tamboui.text.Text;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.element.StyledElement;
-import dev.tamboui.toolkit.elements.ListElement;
-import dev.tamboui.widgets.common.ScrollBarPolicy;
+import dev.tamboui.toolkit.elements.ScrollableElement;
+import dev.tamboui.tui.bindings.Actions;
+import dev.ui.Action;
 import dev.ui.Format;
 
 import java.util.ArrayList;
@@ -28,23 +29,26 @@ public final class ImageDetailView {
     private static final int COLUMN_GUTTER = 2;
     private static final int COLUMN_CEILING = 48;
     private static final String NONE = "No container runs this image.";
-    private static final String HINTS = "r reload · d delete · ↑ ↓ scroll · esc back";
+    private static final String HINTS = "r reload · d delete · ↑ ↓ other image · pgup pgdn scroll · esc back";
 
-    private ListElement<?> body;
+    private ScrollableElement body;
     private ImageDetail rendered;
 
     public StyledElement<?> element(ImageDetail detail) {
         if (!detail.equals(rendered)) {
             rendered = detail;
-            body = list(lines(detail.image(), detail.uses()).toArray(StyledElement<?>[]::new))
-                    .displayOnly()
-                    .autoScroll()
-                    .scrollbar(ScrollBarPolicy.AS_NEEDED);
+            body = scrollable(lines(detail.image(), detail.uses()).toArray(StyledElement<?>[]::new));
         }
         return panel(" " + detail.image().reference() + " ", body.fill(), hint())
                 .rounded()
                 .borderColor(ACCENT)
                 .padding(1);
+    }
+
+    public List<Action> actions() {
+        return List.of(
+                new Action(Actions.PAGE_UP, "scroll the page up", () -> body.state().pageUp()),
+                new Action(Actions.PAGE_DOWN, "scroll the page down", () -> body.state().pageDown()));
     }
 
     private static List<StyledElement<?>> lines(ContainerImage image, List<ImageUse> uses) {
