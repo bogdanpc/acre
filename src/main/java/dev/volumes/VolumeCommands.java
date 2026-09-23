@@ -34,6 +34,10 @@ public class VolumeCommands {
         return cli.run("volume", "rm", name);
     }
 
+    public CliResult<String> prune() {
+        return cli.run("volume", "prune");
+    }
+
     private static List<Volume> volumes(JrsValue listed) {
         return values(listed).map(VolumeCommands::volume).toList();
     }

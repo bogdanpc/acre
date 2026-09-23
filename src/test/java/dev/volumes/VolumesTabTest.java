@@ -10,13 +10,22 @@ import dev.ui.TableController;
 import dev.tamboui.tui.event.KeyCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class VolumesTabTest {
 
     @RegisterExtension
     final MockContainerCli cli = new MockContainerCli();
+
+    @TempDir
+    Path folder;
 
     private static final Volume PGDATA =
             new Volume("pgdata", "local", "ext4", 549755813888L, "/Users/me/volumes/pgdata/volume.img");
@@ -66,11 +75,27 @@ class VolumesTabTest {
         terminal.press(KeyCode.ENTER).assertShows("No container mounts this volume.");
     }
 
+    @Test
+    void pruneRunsTheVolumePruneCommand() throws IOException {
+        var calls = folder.resolve("calls");
+        var commands = new VolumeCommands(cli.running("#!/bin/sh\necho \"$@\" >> '" + calls + "'\n"));
+        var terminal = new TestScreen(100, 30);
+        terminal.show(tab(List.of(PGDATA), List.of(DB), commands)::element);
+
+        terminal.press('P');
+
+        assertEquals(List.of("volume prune"), Files.readAllLines(calls));
+    }
+
     private VolumesTab tab(List<Volume> volumes, List<Container> containers) {
+        return tab(volumes, containers, new VolumeCommands(cli.missing()));
+    }
+
+    private VolumesTab tab(List<Volume> volumes, List<Container> containers, VolumeCommands commands) {
         var table = new TableController<>("Volumes", () -> CliResult.success(volumes), new CliRunner(Runnable::run));
         return new VolumesTab(
                 table,
                 new Loader<>(() -> CliResult.success(containers), List.of(), new CliRunner(Runnable::run)),
-                new VolumesController(new VolumeCommands(cli.missing()), table));
+                new VolumesController(commands, table));
     }
 }

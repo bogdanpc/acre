@@ -38,21 +38,21 @@ java -jar acre-<version>.jar
 
 ## Keys
 
-| Key         | Action                            |
-|-------------| --------------------------------- |
-| `↑` `↓`     | Move up and down                 |
-| `1` `2` `3` | Containers / images / volumes     |
-| `tab`       | Next tab                          |
-| `enter`     | Details for the selected row      |
-| `l`         | Container logs                    |
-| `s`         | Start                             |
-| `x`         | Stop                              |
-| `t`         | Restart                           |
-| `P`         | Prune                             |
-| `r`         | Reload                            |
-| `:` or `^p` | Command palette                   |
-| `?`         | Help                              |
-| `q`         | Quit                              |
+| Key           | Action                        |
+|---------------|-------------------------------|
+| `PgUp` `PgDn` | Move up and down              |
+| `1` `2` `3`   | Containers / images / volumes |
+| `tab`         | Next tab                      |
+| `enter`       | Details for the selected row  |
+| `l`           | Container logs                |
+| `s`           | Start                         |
+| `x`           | Stop                          |
+| `t`           | Restart                       |
+| `P`           | Prune                         |
+| `r`           | Reload                        |
+| `:` or `^p`   | Command palette               |
+| `?`           | Help                          |
+| `q`           | Quit                          |
 
 ## Build from source
 

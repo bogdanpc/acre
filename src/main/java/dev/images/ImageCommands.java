@@ -37,6 +37,10 @@ public class ImageCommands {
         return cli.run("image", "delete", image);
     }
 
+    public CliResult<String> prune() {
+        return cli.run("image", "prune");
+    }
+
     private static List<ContainerImage> images(JrsValue listed) {
         return values(listed).map(ImageCommands::image).toList();
     }

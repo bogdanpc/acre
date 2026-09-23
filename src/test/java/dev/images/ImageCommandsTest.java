@@ -116,6 +116,16 @@ class ImageCommandsTest {
     }
 
     @Test
+    void prunesThroughTheImagePruneCommand() {
+        var commands = new ImageCommands(cli.running("""
+                #!/bin/sh
+                echo "$@"
+                """));
+
+        assertEquals("image prune", value(commands.prune()).strip());
+    }
+
+    @Test
     void failsWhenTheCliFails() {
         var commands = new ImageCommands(cli.running("""
                 #!/bin/sh

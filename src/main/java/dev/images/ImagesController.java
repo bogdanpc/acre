@@ -17,12 +17,19 @@ public class ImagesController {
     }
 
     List<Action> actions() {
-        return List.of(new Action(KeyBindings.DELETE, "delete image", this::delete));
+        return List.of(
+                new Action(KeyBindings.DELETE, "delete image", this::delete),
+                new Action(KeyBindings.PRUNE, "prune image", this::prune)
+        );
     }
 
     void delete() {
         controller.selected()
                 .map(ContainerImage::reference)
                 .ifPresent(r -> controller.execute(() -> commands.delete(r)));
+    }
+
+    void prune() {
+        controller.execute(commands::prune);
     }
 }

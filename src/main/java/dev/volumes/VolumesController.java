@@ -18,12 +18,18 @@ public class VolumesController {
     }
 
     List<Action> actions() {
-        return List.of(new Action(KeyBindings.DELETE, "delete the volume", this::remove));
+        return List.of(
+                new Action(KeyBindings.DELETE, "delete the volume", this::remove),
+                new Action(KeyBindings.PRUNE, "prune the volume", this::prune));
     }
 
     void remove() {
         controller.selected()
                 .map(Volume::name)
                 .ifPresent(n -> controller.execute(() -> commands.remove(n)));
+    }
+
+    void prune() {
+        controller.execute(commands::prune);
     }
 }
